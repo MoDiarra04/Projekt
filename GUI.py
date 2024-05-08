@@ -1,5 +1,8 @@
-import tkinter as tk
 from tkinter import *
+from tkinter import filedialog
+import tkinter as tk
+from PIL import Image, ImageTk
+
 
 class IrrigationSystemApp(tk.Tk):
     def __init__(self):
@@ -56,6 +59,9 @@ class IrrigationSystemApp(tk.Tk):
         name_label.grid(row=0, column=0, padx=10, pady=5)
         name_entry = tk.Entry(create_profile_window)
         name_entry.grid(row=0, column=1, padx=10, pady=5)
+        bild_label = tk.Label(create_profile_window, text="Bild hochladen:")
+        bild_label.grid(row=1, column=0, padx=10, pady=5)
+        tk.Button(create_profile_window,text="Img", command=self.upload_image).grid(row=1, column=1, padx=10, pady=5)
 
         # Implementiere weitere Widgets für die Profilerstellung
 
@@ -88,6 +94,15 @@ class IrrigationSystemApp(tk.Tk):
         # Lädt das ausgewählte Profil
         print("Profil geladen:", profile_name)
         # Implementiere das Laden des Profils in den Wochenplan und weitere Aktionen
+
+    def upload_image(self):
+        label = tk.Label(self)
+        file_path = filedialog.askopenfilename()
+        if file_path:
+            image = Image.open(file_path)
+            photo = ImageTk.PhotoImage(image)
+            label.config(image=photo)
+            label.image = photo
 
 if __name__ == "__main__":
     app = IrrigationSystemApp()
