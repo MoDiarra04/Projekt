@@ -17,11 +17,11 @@ class IrrigationSystemApp(tk.Tk):
 
     def create_main_page(self):
         # Firmenname
-        firmenname_label = tk.Label(self, text="Firmenname", font=("Helvetica", 20))
+        firmenname_label = tk.Label(text="Firmenname", font=("Helvetica", 20))
         firmenname_label.pack(side=tk.TOP)
 
         # Wochenansicht
-        wochenansicht_frame = tk.Frame(self,bg='grey',bd=5,relief=RAISED,pady=2)
+        wochenansicht_frame = tk.Frame(bg='grey',bd=5,relief=RAISED,pady=2)
         wochenansicht_frame.pack(side=tk.LEFT, padx=10, pady=10)
         # Hier Wochenansicht implementieren
         #Wochentag
@@ -41,7 +41,7 @@ class IrrigationSystemApp(tk.Tk):
         tk.Label(wochenansicht_frame,text='20-24 Uhr').grid(row=7,column=0)
     
         # Buttons
-        buttons_frame = tk.Frame(self)
+        buttons_frame = tk.Frame()
         buttons_frame.pack(side=tk.RIGHT, padx=10, pady=10)
         profil_erstellen_button = tk.Button(buttons_frame, text="Profil erstellen", command=self.create_profile_page)
         profil_erstellen_button.pack(side=tk.TOP)
@@ -51,7 +51,7 @@ class IrrigationSystemApp(tk.Tk):
 
     def create_profile_page(self):
         # Profil erstellen Seite
-        create_profile_window = tk.Toplevel(self)
+        create_profile_window = tk.Toplevel()
         create_profile_window.title("Profil erstellen")
 
         # Widgets für Profilerstellung
@@ -77,7 +77,7 @@ class IrrigationSystemApp(tk.Tk):
 
     def load_profile_page(self):
         # Profil laden Seite
-        load_profile_window = tk.Toplevel(self)
+        load_profile_window = tk.Toplevel()
         load_profile_window.title("Profil laden")
 
         # Liste der Profile
@@ -96,7 +96,7 @@ class IrrigationSystemApp(tk.Tk):
         # Implementiere das Laden des Profils in den Wochenplan und weitere Aktionen
 
     def upload_image(self):
-        label = tk.Label(self)
+        label = tk.Label()
         file_path = filedialog.askopenfilename()
         if file_path:
             image = Image.open(file_path)
