@@ -22,7 +22,7 @@ class IrrigationSystemApp(tk.Tk):
 
         # Wochenansicht
         wochenansicht_frame = tk.Frame(bg='grey',bd=5,relief=RAISED,pady=2)
-        wochenansicht_frame.pack(side=tk.LEFT, padx=10, pady=10)
+        wochenansicht_frame.pack(side=tk.TOP)
         # Hier Wochenansicht implementieren
         #Wochentag
         tk.Label(wochenansicht_frame,text='Montag').grid(row=1,column=1)
@@ -32,13 +32,7 @@ class IrrigationSystemApp(tk.Tk):
         tk.Label(wochenansicht_frame,text='Freitag').grid(row=1,column=5)
         tk.Label(wochenansicht_frame,text='Samstag').grid(row=1,column=6)
         tk.Label(wochenansicht_frame,text='Sonntag').grid(row=1,column=7)
-        #Uhrzeit
-        tk.Label(wochenansicht_frame,text='0-4 Uhr').grid(row=2,column=0)
-        tk.Label(wochenansicht_frame,text='4-8 Uhr').grid(row=3,column=0)
-        tk.Label(wochenansicht_frame,text='8-12 Uhr').grid(row=4,column=0)
-        tk.Label(wochenansicht_frame,text='12-16 Uhr').grid(row=5,column=0)
-        tk.Label(wochenansicht_frame,text='16-20 Uhr').grid(row=6,column=0)
-        tk.Label(wochenansicht_frame,text='20-24 Uhr').grid(row=7,column=0)
+ 
     
         # Buttons
         buttons_frame = tk.Frame()
@@ -61,13 +55,39 @@ class IrrigationSystemApp(tk.Tk):
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         bild_label = tk.Label(create_profile_window, text="Bild hochladen:")
         bild_label.grid(row=1, column=0, padx=10, pady=5)
-        tk.Button(create_profile_window,text="Img", command=self.upload_image).grid(row=1, column=1, padx=10, pady=5)
-
+        upload_button = tk.Button(create_profile_window,text="Bild hichladen")
+        upload_button.grid(row=1, column=1, padx=10, pady=5)
         # Implementiere weitere Widgets für die Profilerstellung
+        # Liste der Wochentage
+        weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+        weekday_label = tk.Label(create_profile_window, text="Wochentag: ")
+        weekday_label.grid(row=2, column=0, padx=10, pady=5)
+        # Dropdown-Menü für Wochentage
+        selected_weekday = tk.StringVar()
+        selected_weekday.set(weekdays[0])  # Standardmäßig den ersten Wochentag auswählen
+        weekday_dropdown = tk.OptionMenu(create_profile_window,selected_weekday, *weekdays)
+        weekday_dropdown.grid(row=2, column=1, padx=10, pady=5)
+        # Liste der Stunden von 0 bis 23
+        hours = [str(hour) for hour in range(24)]
 
+        # Dropdown-Menü für Uhrzeit
+        selected_hour_label = tk.Label(create_profile_window, text="Uhrzeit: ")
+        selected_hour_label.grid(row=3, column=0, padx=10, pady=5)
+        selected_hour = tk.StringVar()
+        selected_hour.set(hours[0])  # Standardmäßig die erste Stunde auswählen
+        hour_dropdown = tk.OptionMenu(create_profile_window, selected_hour, *hours)
+        hour_dropdown.grid(row=3, column=1, padx=10, pady=5)
+        # Dropdown Dauer
+        minuten_label = tk.Label(create_profile_window, text="Dauer: ")
+        minuten_label.grid(row=4, column=0, padx=10, pady=5)
+        minutes = [str(minute) for minute in range(1, 21)]
+        selected_minute = tk.StringVar()
+        selected_minute.set(minutes[0])  # Standardmäßig die erste Minute auswählen
+        minute_dropdown = tk.OptionMenu(create_profile_window, selected_minute, *minutes)
+        minute_dropdown.grid(row=4, column=1, padx=10, pady=5)
         # Button zum Speichern des Profils
         save_button = tk.Button(create_profile_window, text="Speichern", command=lambda: self.save_profile(name_entry.get()))
-        save_button.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+        save_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
     def save_profile(self, name):
         # Speichert das erstellte Profil und schließt das Profil-Erstellungsfenster
