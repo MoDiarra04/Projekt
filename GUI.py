@@ -8,7 +8,7 @@ class IrrigationSystemApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bewässerungssystem")
-        self.geometry("800x600")
+        self.geometry("800x480")
 
         # Variablen für Profilinformationen
         self.profiles = []
