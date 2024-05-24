@@ -1,2 +1,0 @@
-# Projekt
-automatisierte Bewässerungsanlage
