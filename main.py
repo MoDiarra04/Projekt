@@ -14,7 +14,6 @@ class IrrigationSystemApp(tk.Tk):
 
         # Hauptseite erstellen
         create_main_page(self)
-        display_profiles(self)
 
 if __name__ == "__main__":
     app = IrrigationSystemApp()
