@@ -99,12 +99,17 @@ def create_profile_page(app):
     hour_dropdown = tk.OptionMenu(create_profile_window, selected_hour, *hours)
     hour_dropdown.grid(row=4, column=1, padx=10, pady=5)
     
-    dauer_label = tk.Label(create_profile_window, text="Bewässerungsdauer (min):")
-    dauer_label.grid(row=5, column=0, padx=10, pady=5)
-    dauer_entry = tk.Entry(create_profile_window)
-    dauer_entry.grid(row=5, column=1, padx=10, pady=5)
-    
-    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, dauer_entry, create_profile_window))
+    # Dropdown Dauer
+    minuten_label = tk.Label(create_profile_window, text="Bewässerungsdauer (min):")
+    minuten_label.grid(row=5, column=0, padx=10, pady=5)
+    minutes = [str(minute) for minute in range(1, 21)]
+    selected_minute = tk.StringVar()
+    selected_minute.set(minutes[0])  # Standardmäßig die erste Minute auswählen
+    minute_dropdown = tk.OptionMenu(create_profile_window, selected_minute, *minutes)
+    minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
+
+    #Profile speichern    
+    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, create_profile_window))
     speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
 
 def save_profile_and_close(app, name, weekday, hour, duration_entry, window):

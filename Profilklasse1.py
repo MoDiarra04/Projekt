@@ -42,7 +42,6 @@ class ProfileCard(tk.Frame):
             clicked_profiles.append(self.profile)
             self.config(bg="lightgreen")
         else:
-            clicked_profiles.remove(self.profile)
             self.config(bg="white")
         
         # Wenn ein Update-Callback bereitgestellt wurde, diesen aufrufen
