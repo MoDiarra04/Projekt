@@ -1,50 +1,63 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
-from Profilklasse1 import ProfileCard,clicked_profiles
+from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile  # Import "Datenbank" könnte nicht aufgelöst werden
 
-selection=[]
+# Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
+# und alten Profile-Listen bzw.die geladenen Profile in old
+
+selection = []
 old = []
 
 def create_main_page(app):
+    # Firmenname-Label erstellen und platzieren
     firmenname_label = tk.Label(app, text="Firmenname", font=("Helvetica", 20))
     firmenname_label.pack(side=tk.TOP)
     
+    # Wochenansicht-Frame erstellen und konfigurieren
     app.wochenansicht_frame = tk.Frame(app, bg='grey', bd=5, relief="raised", pady=2)
     app.wochenansicht_frame.pack(side=tk.TOP)
     app.days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
     for idx, day in enumerate(app.days):
         tk.Label(app.wochenansicht_frame, text=day).grid(row=0, column=idx, padx=5, pady=5)
     
+    # Frame für die Buttons erstellen
     buttons_frame = tk.Frame(app)
     buttons_frame.pack(side=tk.RIGHT)
     
+    # Button zum Erstellen eines Profils erstellen
     profil_erstellen_button = tk.Button(buttons_frame, text="Profil erstellen", command=lambda: create_profile_page(app))
     profil_erstellen_button.pack(side=tk.TOP)
     
+    # Button zum Anzeigen der Profile erstellen
     profil_laden_button = tk.Button(buttons_frame, text="Profile anzeigen", command=lambda: show_profiles_page(app))
     profil_laden_button.pack(side=tk.TOP)
 
 def display_profiles(app):
+    # Entfernt alle Widgets aus dem Wochenansicht-Frame
     for widget in app.wochenansicht_frame.winfo_children():
         if isinstance(widget, tk.Frame):
             widget.destroy()
     
+    # Holt Profile aus der Datenbank
     profiles = get_profiles(app.conn)
     if selection != []:
         profiles = [item for item in profiles if item[0] == selection[-1][0]]
         global old
-        if not any(item[0]==profiles[0][0] for item in old):
+        if not any(item[0] == profiles[0][0] for item in old):
             for profile in profiles:
                 old.append(profile)
     print(old)
     profiles = old
+    
+    # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
         name, wochentag, uhrzeit, bewaessungsdauer, _ = profile
         day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer))
     
+    # Profile in der Wochenansicht anzeigen
     for day, profiles in day_profile_map.items():
         day_index = app.days.index(day)
         for i, (name, uhrzeit, bewaessungsdauer) in enumerate(profiles):
@@ -58,6 +71,7 @@ def create_profile_page(app):
     create_profile_window = Toplevel()
     create_profile_window.title("Profil erstellen")
     
+    # Widgets für die Profilerstellung
     name_label = tk.Label(create_profile_window, text="Name:")
     name_label.grid(row=0, column=0, padx=10, pady=5)
     name_entry = tk.Entry(create_profile_window)
@@ -94,11 +108,15 @@ def create_profile_page(app):
     speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
 
 def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
+    # Validierung der Eingaben
     if not name or not app.image_path or not weekday.get() or not hour.get() or not duration_entry.get():
         messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
     
+    # Speichern des Profils in der Datenbank
     save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path)
+    
+    # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
     next_day_index = (current_day_index + 1) % len(app.days)
     next_day = app.days[next_day_index]
@@ -106,11 +124,12 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
     
     hour.set("00:00")
     duration_entry.delete(0, tk.END)
-    
+
 def show_profiles_page(app):
     create_window = Toplevel(app)
     create_window.title("Profiles")
     
+    # Frame und Canvas für die Profilansicht erstellen
     container = tk.Frame(create_window)
     container.pack(fill="both", expand=True)
     
@@ -126,12 +145,14 @@ def show_profiles_page(app):
     profiles_frame = tk.Frame(canvas)
     canvas.create_window((0, 0), window=profiles_frame, anchor="nw")
     
+    # Profile aus der Datenbank holen und anzeigen
     profiles = get_profiles(app.conn)
     profiles = {item[0]: item for item in profiles}.values()
     for profile in profiles:
         card = ProfileCard(profiles_frame, profile, update_callback=update_clicked_profiles)
         card.pack(padx=10, pady=10, fill="x")
     
+    # Button-Frame erstellen
     button_frame = tk.Frame(create_window)
     button_frame.pack(fill="x", pady=10)
     
@@ -162,5 +183,3 @@ def set_image_path(app):
         photo = ImageTk.PhotoImage(img)
         app.image_label.config(image=photo)
         app.image_label.image = photo
-
-

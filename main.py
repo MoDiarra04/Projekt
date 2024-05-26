@@ -5,16 +5,19 @@ from Datenbank import create_table, connect_db
 class IrrigationSystemApp(tk.Tk):
     def __init__(self):
         super().__init__()
+        # Setzt den Titel des Hauptfensters
         self.title("Bewässerungssystem")
+        # Setzt die Abmessungen des Hauptfensters
         self.geometry("800x480")
 
-        # Datenbankverbindung herstellen und Tabelle erstellen
+        # Stellt die Verbindung zur Datenbank her und erstellt die Tabelle
         self.conn = connect_db('profiles.db')
         create_table(self.conn)
 
-        # Hauptseite erstellen
+        # Erstellt die Hauptseite der Anwendung
         create_main_page(self)
 
 if __name__ == "__main__":
+    # Initialisiert und startet die Anwendung
     app = IrrigationSystemApp()
     app.mainloop()
