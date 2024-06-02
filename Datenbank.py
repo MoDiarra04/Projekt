@@ -14,7 +14,7 @@ def create_table(conn):
             wochentag TEXT,
             uhrzeit TEXT,
             bewaessungsdauer TEXT,
-            image_path TEXT
+            image_path TEXT  
         )
     ''')
     conn.commit()

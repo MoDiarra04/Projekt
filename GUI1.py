@@ -43,14 +43,17 @@ def display_profiles(app):
     # Holt Profile aus der Datenbank
     profiles = get_profiles(app.conn)
     if selection != []:
+        # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
         profiles = [item for item in profiles if item[0] == selection[-1][0]]
         global old
+        # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
         if not any(item[0] == profiles[0][0] for item in old):
             for profile in profiles:
                 old.append(profile)
-    print(old)
-    profiles = old
+
+    #print(old)
     
+    profiles = old
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
@@ -128,7 +131,6 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
     weekday.set(next_day)
     
     hour.set("00:00")
-    duration_entry.delete(0, tk.END)
 
 def show_profiles_page(app):
     create_window = Toplevel(app)
@@ -178,6 +180,7 @@ def update_clicked_profiles(profiles):
         selection.append(profile)
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
+    print(selection)
 
 def set_image_path(app):
     file_path = filedialog.askopenfilename()
