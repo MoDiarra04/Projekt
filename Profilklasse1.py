@@ -14,7 +14,7 @@ class ProfileCard(tk.Frame):
 
     def create_widgets_with_image(self, window):
         name = self.profile[0]
-        image_path = self.profile[-1]
+        image_path = self.profile[4]
         
         # Wenn ein Bildpfad vorhanden ist, das Bild laden und anzeigen
         if image_path:

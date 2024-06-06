@@ -2,13 +2,24 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
-from Datenbank import save_profile, get_profiles, delete_profile  # Import "Datenbank" könnte nicht aufgelöst werden
+from Datenbank import save_profile, get_profiles, delete_profile, update_selection  # Import "Datenbank" könnte nicht aufgelöst werden
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
 
 selection = []
 old = []
+count = 0
+#old wiederherstellen, aber nur einmal
+def recreate_old(app,profiles):
+    global count
+    if count == 1:
+        return
+    count += 1
+    global old
+    for tup in profiles:
+        if tup[5] == 1:
+            old.append(tup)
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
@@ -34,30 +45,28 @@ def create_main_page(app):
     profil_laden_button = tk.Button(buttons_frame, text="Profile anzeigen", command=lambda: show_profiles_page(app))
     profil_laden_button.pack(side=tk.TOP)
 
-def display_profiles(app):
+def display_profiles(app,window=None):
+    if window:
+        window.destroy()
     # Entfernt alle Widgets aus dem Wochenansicht-Frame
     for widget in app.wochenansicht_frame.winfo_children():
         if isinstance(widget, tk.Frame):
             widget.destroy()
-    
-    # Holt Profile aus der Datenbank
     profiles = get_profiles(app.conn)
+    recreate_old(app,profiles)
     if selection != []:
         # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
         profiles = [item for item in profiles if item[0] == selection[-1][0]]
-        global old
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
         if not any(item[0] == profiles[0][0] for item in old):
             for profile in profiles:
                 old.append(profile)
 
-    #print(old)
-    
     profiles = old
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ = profile
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ = profile
         day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer))
     
     # Profile in der Wochenansicht anzeigen
@@ -68,6 +77,11 @@ def display_profiles(app):
             profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
             profile_label = tk.Label(profile_frame, text=f"{name}\n{uhrzeit}\n{bewaessungsdauer}")
             profile_label.pack(padx=5, pady=5)
+    
+    # Selected in Datenbank ändern für Profile in old
+    sorted = {item[0]: item for item in old}.values()
+    for profile in sorted:
+        update_selection(app.conn,profile[0],True)
 
 def create_profile_page(app):
     app.image_path = None
@@ -122,7 +136,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
         return
     
     # Speichern des Profils in der Datenbank
-    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path)
+    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path,False)
     
     # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
@@ -133,7 +147,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
     hour.set("00:00")
 
 def show_profiles_page(app):
-    create_window = Toplevel(app)
+    create_window = tk.Toplevel(app)
     create_window.title("Profiles")
     
     # Frame und Canvas für die Profilansicht erstellen
@@ -159,6 +173,15 @@ def show_profiles_page(app):
         card = ProfileCard(profiles_frame, profile, update_callback=update_clicked_profiles)
         card.pack(padx=10, pady=10, fill="x")
     
+    # Checkbox erstellen
+    module_var1 = tk.IntVar()  # Variable für die Checkbox
+    module_checkbox1 = tk.Checkbutton(create_window, text="Modul: 1", variable=module_var1)
+    module_checkbox1.pack(side="left", padx=10)
+    
+    module_var2 = tk.IntVar()  # Variable für die Checkbox
+    module_checkbox2 = tk.Checkbutton(create_window, text="Modul: 2", variable=module_var2)
+    module_checkbox2.pack(side="left", padx=10)
+
     # Button-Frame erstellen
     button_frame = tk.Frame(create_window)
     button_frame.pack(fill="x", pady=10)
@@ -171,8 +194,9 @@ def show_profiles_page(app):
     exp_button.pack(side="left", padx=5)
     imp_button = tk.Button(button_frame, text="Import")
     imp_button.pack(side="left", padx=5)
-    ok_button = tk.Button(button_frame, text="OK", command=lambda: display_profiles(app))
+    ok_button = tk.Button(button_frame, text="OK", command=lambda: display_profiles(app, create_window))
     ok_button.pack(side="right", padx=5)
+
 
 def update_clicked_profiles(profiles):
     global selection
@@ -180,7 +204,6 @@ def update_clicked_profiles(profiles):
         selection.append(profile)
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
-    print(selection)
 
 def set_image_path(app):
     file_path = filedialog.askopenfilename()

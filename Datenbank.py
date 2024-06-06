@@ -14,28 +14,38 @@ def create_table(conn):
             wochentag TEXT,
             uhrzeit TEXT,
             bewaessungsdauer TEXT,
-            image_path TEXT  
+            image_path TEXT,  
+            selected INTEGER
         )
     ''')
     conn.commit()
 
-def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path):
+def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected):
     # Speichert ein neues Profil in der Datenbank
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path) 
-        VALUES (?, ?, ?, ?, ?)
-    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path))
+        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected))
     conn.commit()
 
 def get_profiles(conn):
     # Ruft alle gespeicherten Profile aus der Datenbank ab
     cursor = conn.cursor()
-    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path FROM profiles')
+    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected FROM profiles')
     return cursor.fetchall()
 
 def delete_profile(conn, name):
     # Löscht ein Profil aus der Datenbank
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM profiles WHERE name=?', (name,))
+    cursor.execute('DELETE FROM profiles WHERE name=?', (name))
+    conn.commit()
+
+def update_selection(conn, name,selection):
+    cursor = conn.cursor()
+    cursor.execute('''
+                   UPDATE profiles SET
+                   selected = ?
+                   WHERE name = ?
+                   ''',(selection,name))
     conn.commit()
