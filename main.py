@@ -16,7 +16,7 @@ class IrrigationSystemApp(tk.Tk):
 
         # Erstellt die Hauptseite der Anwendung
         create_main_page(self)
-        display_profiles(self)
+        display_profiles(self,True)
         #get every selection = True and push it to old in start
 if __name__ == "__main__":
     # Initialisiert und startet die Anwendung

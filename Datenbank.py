@@ -15,24 +15,25 @@ def create_table(conn):
             uhrzeit TEXT,
             bewaessungsdauer TEXT,
             image_path TEXT,  
-            selected INTEGER
+            selected INTEGER,
+            modulnummer INTEGER
         )
     ''')
     conn.commit()
 
-def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected):
+def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected, modulnummer):
     # Speichert ein neues Profil in der Datenbank
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected) 
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected))
+        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected, modulnummer) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected, modulnummer))
     conn.commit()
 
 def get_profiles(conn):
     # Ruft alle gespeicherten Profile aus der Datenbank ab
     cursor = conn.cursor()
-    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected FROM profiles')
+    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path, selected, modulnummer FROM profiles')
     return cursor.fetchall()
 
 def delete_profile(conn, name):
@@ -41,11 +42,20 @@ def delete_profile(conn, name):
     cursor.execute('DELETE FROM profiles WHERE name=?', (name))
     conn.commit()
 
-def update_selection(conn, name,selection):
+def update_selection(conn, name, selection):
     cursor = conn.cursor()
     cursor.execute('''
                    UPDATE profiles SET
                    selected = ?
                    WHERE name = ?
                    ''',(selection,name))
+    conn.commit()
+
+def update_modulnummer(conn, name, modulnummer):
+    cursor = conn.cursor()
+    cursor.execute('''
+                   UPDATE profiles SET
+                   modulnummer = ?
+                   WHERE name = ?
+                   ''',(modulnummer,name))
     conn.commit()
