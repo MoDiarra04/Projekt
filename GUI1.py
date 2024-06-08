@@ -33,6 +33,10 @@ def create_main_page(app):
     # Button zum Anzeigen der Profile erstellen
     profil_laden_button = tk.Button(buttons_frame, text="Profile anzeigen", command=lambda: show_profiles_page(app))
     profil_laden_button.pack(side=tk.TOP)
+    
+    # Back button
+    back_button = tk.Button(buttons_frame, text="Zurück", command=app.destroy)
+    back_button.pack(side=tk.TOP)
 
 def display_profiles(app):
     # Entfernt alle Widgets aus dem Wochenansicht-Frame
@@ -72,7 +76,9 @@ def display_profiles(app):
 def create_profile_page(app):
     app.image_path = None
     create_profile_window = Toplevel()
-    create_profile_window.title("Profil erstellen")
+    
+    # Entfernt die title bar
+    create_profile_window.overrideredirect(True)
     
     # Widgets für die Profilerstellung
     name_label = tk.Label(create_profile_window, text="Name:")
@@ -111,9 +117,13 @@ def create_profile_page(app):
     minute_dropdown = tk.OptionMenu(create_profile_window, selected_minute, *minutes)
     minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
 
-    #Profile speichern    
+    # Profile speichern    
     speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, create_profile_window))
     speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
+    
+    # Back button
+    back_button = tk.Button(create_profile_window, text="Zurück", command=create_profile_window.destroy)
+    back_button.grid(row=6, column=1, pady=10)
 
 def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
     # Validierung der Eingaben
@@ -134,7 +144,9 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
 
 def show_profiles_page(app):
     create_window = Toplevel(app)
-    create_window.title("Profiles")
+    
+    # Entfernt die title bar
+    create_window.overrideredirect(True)
     
     # Frame und Canvas für die Profilansicht erstellen
     container = tk.Frame(create_window)
@@ -163,7 +175,7 @@ def show_profiles_page(app):
     button_frame = tk.Frame(create_window)
     button_frame.pack(fill="x", pady=10)
     
-    back_button = tk.Button(button_frame, text="Back")
+    back_button = tk.Button(button_frame, text="Zurück", command=create_window.destroy)
     back_button.pack(side="left", padx=5)
     edit_button = tk.Button(button_frame, text="Edit")
     edit_button.pack(side="left", padx=5)

@@ -5,8 +5,10 @@ from Datenbank import create_table, connect_db
 class IrrigationSystemApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        # Setzt den Titel des Hauptfensters
-        self.title("Bewässerungssystem")
+        
+        # Entfernt die title bar des Hauptfensters.
+        self.overrideredirect(True)
+        
         # Setzt die Abmessungen des Hauptfensters
         self.geometry("800x480")
 
