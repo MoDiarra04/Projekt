@@ -2,13 +2,24 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
-from Datenbank import save_profile, get_profiles, delete_profile  # Import "Datenbank" könnte nicht aufgelöst werden
+from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
 
 selection = []
 old = []
+count = 0
+#old wiederherstellen, aber nur einmal
+def recreate_old(profiles):
+    global count
+    if count == 1:
+        return
+    count += 1
+    global old
+    for tup in profiles:
+        if tup[5] == 1:
+            old.append(tup)
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
@@ -38,40 +49,52 @@ def create_main_page(app):
     back_button = tk.Button(buttons_frame, text="Zurück", command=app.destroy)
     back_button.pack(side=tk.TOP)
 
-def display_profiles(app):
-    # Entfernt alle Widgets aus dem Wochenansicht-Frame
-    for widget in app.wochenansicht_frame.winfo_children():
-        if isinstance(widget, tk.Frame):
-            widget.destroy()
+def display_profiles(app, modulnummer=None):
+    if count == 1:
+        if not selection:
+            messagebox.showerror("Sie müssen ein Profil auswählen")
+            return
+
+    if not modulnummer:
+        print(clicked_profiles)
+        messagebox.showerror("Sie müssen ein Modul auswählen")
+        return
     
-    # Holt Profile aus der Datenbank
     profiles = get_profiles(app.conn)
+    recreate_old(profiles)
     if selection != []:
         # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
-        profiles = [item for item in profiles if item[0] == selection[-1][0]]
-        global old
+        profile = [item for item in profiles if item[0] == selection[-1][0]]
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
-        if not any(item[0] == profiles[0][0] for item in old):
-            for profile in profiles:
-                old.append(profile)
+        if not any(item[0] == profile[0][0] for item in old):
+            update_modulnummer(app.conn,profile[0][0],modulnummer)
+            #wegen update veränder sich profile, deshalb nochmal connecten
+            profiles = get_profiles(app.conn)
+            profile = [item for item in profiles if item[0] == selection[-1][0]] 
+            for termine in profile:
+                old.append(termine)
 
-    #print(old)
-    
+
     profiles = old
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ = profile
-        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer))
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer = profile
+        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer))
     
     # Profile in der Wochenansicht anzeigen
     for day, profiles in day_profile_map.items():
         day_index = app.days.index(day)
-        for i, (name, uhrzeit, bewaessungsdauer) in enumerate(profiles):
+        for i, (name, uhrzeit, bewaessungsdauer, modulnummer) in enumerate(profiles):
             profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
             profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
-            profile_label = tk.Label(profile_frame, text=f"{name}\n{uhrzeit}\n{bewaessungsdauer}")
+            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}")
             profile_label.pack(padx=5, pady=5)
+    
+    # Selected in Datenbank ändern für Profile in old
+    sorted = {item[0]: item for item in old}.values()
+    for profile in sorted:
+        update_selection(app.conn,profile[0],True)
 
 def create_profile_page(app):
     app.image_path = None
@@ -117,22 +140,24 @@ def create_profile_page(app):
     minute_dropdown = tk.OptionMenu(create_profile_window, selected_minute, *minutes)
     minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
 
-    # Profile speichern    
-    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, create_profile_window))
+
+    #Profile speichern    
+    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute))
+
     speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
     
     # Back button
     back_button = tk.Button(create_profile_window, text="Zurück", command=create_profile_window.destroy)
     back_button.grid(row=6, column=1, pady=10)
 
-def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
+def save_profile_and_close(app, name, weekday, hour, duration_entry):
     # Validierung der Eingaben
     if not name or not app.image_path or not weekday.get() or not hour.get() or not duration_entry.get():
         messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
     
     # Speichern des Profils in der Datenbank
-    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path)
+    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path,False,False)
     
     # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
@@ -143,10 +168,12 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, window):
     hour.set("00:00")
 
 def show_profiles_page(app):
-    create_window = Toplevel(app)
-    
+    create_window = tk.Toplevel(app)
+    create_window.geometry("800x480")
+    create_window.title("Profiles")
     # Entfernt die title bar
     create_window.overrideredirect(True)
+
     
     # Frame und Canvas für die Profilansicht erstellen
     container = tk.Frame(create_window)
@@ -171,6 +198,13 @@ def show_profiles_page(app):
         card = ProfileCard(profiles_frame, profile, update_callback=update_clicked_profiles)
         card.pack(padx=10, pady=10, fill="x")
     
+    # Checkbox erstellen
+    module_var = tk.StringVar()  # Gemeinsame Variable für beide Checkbuttons
+    module_checkbox1 = tk.Checkbutton(create_window, text="Pumpe: 1", variable=module_var, onvalue="1", offvalue="")
+    module_checkbox1.pack(side="left", padx=10)
+    module_checkbox2 = tk.Checkbutton(create_window, text="Pumpe: 2", variable=module_var, onvalue="2", offvalue="")
+    module_checkbox2.pack(side="left", padx=10)
+
     # Button-Frame erstellen
     button_frame = tk.Frame(create_window)
     button_frame.pack(fill="x", pady=10)
@@ -183,8 +217,17 @@ def show_profiles_page(app):
     exp_button.pack(side="left", padx=5)
     imp_button = tk.Button(button_frame, text="Import")
     imp_button.pack(side="left", padx=5)
-    ok_button = tk.Button(button_frame, text="OK", command=lambda: display_profiles(app))
+    ok_button = tk.Button(button_frame, text="OK", command=lambda: [ok_button_callback(app,module_var,create_window),selection.clear()])
     ok_button.pack(side="right", padx=5)
+
+def ok_button_callback(app,module_var,create_window):
+    # Check if the module_var is not empty before converting to int
+    if module_var.get():
+        selected_module = int(module_var.get())
+        display_profiles(app, selected_module)
+    else:
+        messagebox.showerror("Sie müssen ein Modul auswählen")
+    create_window.destroy()
 
 def update_clicked_profiles(profiles):
     global selection
@@ -192,7 +235,6 @@ def update_clicked_profiles(profiles):
         selection.append(profile)
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
-    print(selection)
 
 def set_image_path(app):
     file_path = filedialog.askopenfilename()
