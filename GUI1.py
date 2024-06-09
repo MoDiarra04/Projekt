@@ -185,9 +185,9 @@ def show_profiles_page(app):
     
     # Checkbox erstellen
     module_var = tk.StringVar()  # Gemeinsame Variable für beide Checkbuttons
-    module_checkbox1 = tk.Checkbutton(create_window, text="Modul: 1", variable=module_var, onvalue="1", offvalue="")
+    module_checkbox1 = tk.Checkbutton(create_window, text="Pumpe: 1", variable=module_var, onvalue="1", offvalue="")
     module_checkbox1.pack(side="left", padx=10)
-    module_checkbox2 = tk.Checkbutton(create_window, text="Modul: 2", variable=module_var, onvalue="2", offvalue="")
+    module_checkbox2 = tk.Checkbutton(create_window, text="Pumpe: 2", variable=module_var, onvalue="2", offvalue="")
     module_checkbox2.pack(side="left", padx=10)
 
     # Button-Frame erstellen
@@ -209,11 +209,10 @@ def ok_button_callback(app,module_var,create_window):
     # Check if the module_var is not empty before converting to int
     if module_var.get():
         selected_module = int(module_var.get())
-        print("Selected Module:", selected_module)
         display_profiles(app, selected_module)
-        create_window.destroy()
     else:
         messagebox.showerror("Sie müssen ein Modul auswählen")
+    create_window.destroy()
 
 def update_clicked_profiles(profiles):
     global selection
