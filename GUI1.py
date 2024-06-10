@@ -61,7 +61,42 @@ def display_profiles(app, modulnummer=None):
         print(clicked_profiles)
         messagebox.showerror("Sie müssen ein Modul auswählen")
         return
+    
+    profiles = get_profiles(app.conn)
+    recreate_old(profiles)
+    if selection != []:
+        # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
+        profile = [item for item in profiles if item[0] == selection[-1][0]]
+        # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
+        if not any(item[0] == profile[0][0] for item in old):
+            update_modulnummer(app.conn,profile[0][0],modulnummer)
+            #wegen update veränder sich profile, deshalb nochmal connecten
+            profiles = get_profiles(app.conn)
+            profile = [item for item in profiles if item[0] == selection[-1][0]] 
+            for termine in profile:
+                old.append(termine)
 
+
+    profiles = old
+    # Zuordnung der Profile zu den jeweiligen Wochentagen
+    day_profile_map = {day: [] for day in app.days}
+    for profile in profiles:
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer, _ = profile
+        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer))
+    
+    # Profile in der Wochenansicht anzeigen
+    for day, profiles in day_profile_map.items():
+        day_index = app.days.index(day)
+        for i, (name, uhrzeit, bewaessungsdauer, modulnummer) in enumerate(profiles):
+            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
+            profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
+            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}")
+            profile_label.pack(padx=5, pady=5)
+    
+    # Selected in Datenbank ändern für Profile in old
+    sorted = {item[0]: item for item in old}.values()
+    for profile in sorted:
+        update_selection(app.conn,profile[0],True)
 
 
 def create_manual_page_and_close(app, window): #Beim Profilerstellen!
@@ -93,41 +128,7 @@ def start_countdown(app, duration, window):
 
 
     
-    profiles = get_profiles(app.conn)
-    recreate_old(profiles)
-    if selection != []:
-        # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
-        profile = [item for item in profiles if item[0] == selection[-1][0]]
-        # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
-        if not any(item[0] == profile[0][0] for item in old):
-            update_modulnummer(app.conn,profile[0][0],modulnummer)
-            #wegen update veränder sich profile, deshalb nochmal connecten
-            profiles = get_profiles(app.conn)
-            profile = [item for item in profiles if item[0] == selection[-1][0]] 
-            for termine in profile:
-                old.append(termine)
-
-
-    profiles = old
-    # Zuordnung der Profile zu den jeweiligen Wochentagen
-    day_profile_map = {day: [] for day in app.days}
-    for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer = profile
-        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer))
     
-    # Profile in der Wochenansicht anzeigen
-    for day, profiles in day_profile_map.items():
-        day_index = app.days.index(day)
-        for i, (name, uhrzeit, bewaessungsdauer, modulnummer) in enumerate(profiles):
-            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
-            profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
-            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}")
-            profile_label.pack(padx=5, pady=5)
-    
-    # Selected in Datenbank ändern für Profile in old
-    sorted = {item[0]: item for item in old}.values()
-    for profile in sorted:
-        update_selection(app.conn,profile[0],True)
 
 # Smart-Button-Konfiguration
 def toggle_smart_button(app):
@@ -197,11 +198,11 @@ def create_profile_page(app):
     #Profile speichern    
     speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, app.smart_button_active))
 
-    speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
+    speichern_button.grid(row=7, column=0, columnspan=2, pady=10)
     
     # Back button
     back_button = tk.Button(create_profile_window, text="Zurück", command=create_profile_window.destroy)
-    back_button.grid(row=6, column=1, pady=10)
+    back_button.grid(row=7, column=1, pady=10)
 
 def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     # Validierung der Eingaben
@@ -220,7 +221,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     weekday.set(next_day)
     
     hour.set("00:00")
-    
+
 DEFAULT_IMAGE_PATH = "D:\Programming\P_test\pflanze.png"
 
 def show_profiles_page(app):
