@@ -44,6 +44,8 @@ def create_main_page(app):
     # Button zum Anzeigen der Profile erstellen
     profil_laden_button = tk.Button(buttons_frame, text="Profile anzeigen", command=lambda: show_profiles_page(app))
     profil_laden_button.pack(side=tk.TOP)
+    manual_button = tk.Button(buttons_frame, text="Manuell", command= app.create_manual_page)
+    manual_button.pack(pady=20)
     
     # Back button
     back_button = tk.Button(buttons_frame, text="Zurück", command=app.destroy)
@@ -59,6 +61,37 @@ def display_profiles(app, modulnummer=None):
         print(clicked_profiles)
         messagebox.showerror("Sie müssen ein Modul auswählen")
         return
+
+
+
+def create_manual_page_and_close(app, window): #Beim Profilerstellen!
+    window.destroy()  # Schließt das aktuelle Fenster
+    app.create_manual_page()  # Öffnet die manuelle Bewässerungsseite
+
+def create_manual_page(app):
+    # Erstellt eine Seite für manuelle Bewässerung
+    manual_window = Toplevel(app)
+    manual_window.title("Manuelle Bewässerung")
+
+    dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
+    dauer_label.grid(row=0, column=0, padx=10, pady=5)
+    dauer_entry = tk.Entry(manual_window)
+    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: app.start_countdown(dauer_entry.get(), manual_window))
+    start_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+def start_countdown(app, duration, window):
+    # Startet einen Countdown für die manuelle Bewässerung in Minuten
+    try:
+        duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
+    except ValueError:
+        return  # Dauer ist keine gültige Zahl
+    countdown_label = tk.Label(window, text="")
+    countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
+    app.update_countdown(duration, countdown_label)
+
+
     
     profiles = get_profiles(app.conn)
     recreate_old(profiles)
@@ -95,6 +128,19 @@ def display_profiles(app, modulnummer=None):
     sorted = {item[0]: item for item in old}.values()
     for profile in sorted:
         update_selection(app.conn,profile[0],True)
+
+# Smart-Button-Konfiguration
+def toggle_smart_button(app):
+    # Wechselt den Status des Smart-Buttons
+    app.smart_button_active = not app.smart_button_active
+    update_smart_button_appearance(app)
+
+def update_smart_button_appearance(app):
+    # Aktualisiert das Erscheinungsbild des Smart-Buttons
+    if app.smart_button_active:
+        app.smart_button.config(bg='green', text='Smart (Aktiv)')
+    else:
+        app.smart_button.config(bg='SystemButtonFace', text='Smart')
 
 def create_profile_page(app):
     app.image_path = None
@@ -140,9 +186,16 @@ def create_profile_page(app):
     minute_dropdown = tk.OptionMenu(create_profile_window, selected_minute, *minutes)
     minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
 
+    app.smart_button = tk.Button(create_profile_window, text="Smart", command=lambda: toggle_smart_button(app))
+    app.smart_button.grid(row=6, column=0, columnspan=2, pady=10)
+    update_smart_button_appearance(app)
+
+    manual_button = tk.Button(create_profile_window, text="Manuell", command=lambda: create_manual_page_and_close(app, create_profile_window))
+    manual_button.grid(row=6, column=1, columnspan=2, pady=10)
+
 
     #Profile speichern    
-    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute))
+    speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, app.smart_button_active))
 
     speichern_button.grid(row=6, column=0, columnspan=2, pady=10)
     
@@ -150,14 +203,15 @@ def create_profile_page(app):
     back_button = tk.Button(create_profile_window, text="Zurück", command=create_profile_window.destroy)
     back_button.grid(row=6, column=1, pady=10)
 
-def save_profile_and_close(app, name, weekday, hour, duration_entry):
+def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     # Validierung der Eingaben
-    if not name or not app.image_path or not weekday.get() or not hour.get() or not duration_entry.get():
+    if not name  or not weekday.get() or not hour.get() or not duration_entry.get():
         messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
+    image_path = app.image_path if app.image_path else DEFAULT_IMAGE_PATH
     
     # Speichern des Profils in der Datenbank
-    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), app.image_path,False,False)
+    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
     
     # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
@@ -166,6 +220,8 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry):
     weekday.set(next_day)
     
     hour.set("00:00")
+    
+DEFAULT_IMAGE_PATH = "D:\Programming\P_test\pflanze.png"
 
 def show_profiles_page(app):
     create_window = tk.Toplevel(app)
@@ -236,6 +292,8 @@ def update_clicked_profiles(profiles):
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
 
+DEFAULT_IMAGE_PATH = "D:\Programming\P_test\pflanze.png"
+
 def set_image_path(app):
     file_path = filedialog.askopenfilename()
     if file_path:
@@ -245,3 +303,5 @@ def set_image_path(app):
         photo = ImageTk.PhotoImage(img)
         app.image_label.config(image=photo)
         app.image_label.image = photo
+    else:
+        app.image_path = DEFAULT_IMAGE_PATH
