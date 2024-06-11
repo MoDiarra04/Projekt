@@ -321,9 +321,9 @@ def toggle_smart_button(app):
 def update_smart_button_appearance(app):
     # Aktualisiert das Erscheinungsbild des Smart-Buttons
     if app.smart_button_active:
-        app.smart_button.config(bg='green', text='Smart (Aktiv)')
+        app.smart_button.config(text='Smart (Aktiv)')
     else:
-        app.smart_button.config(bg='SystemButtonFace', text='Smart')
+        app.smart_button.config(text='Smart')
 
 
 def raise_above_all(window):
