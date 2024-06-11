@@ -157,7 +157,12 @@ def create_profile_page(app):
 def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     # Validierung der Eingaben
     if not name  or not weekday.get() or not hour.get() or not duration_entry.get():
-        messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
+        error_window = tk.Toplevel(app)
+        error_window.overrideredirect(True)
+        warning = tk.Label(error_window, text="Fehler, Alle Felder müssen ausgefüllt werden!")
+        warning.pack(pady=5)
+        back_button = tk.Button(error_window, text="Zurück", command=error_window.destroy)
+        back_button.pack(pady=10)
         return
     image_path = app.image_path if app.image_path else Default_Image
     
