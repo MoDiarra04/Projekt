@@ -30,7 +30,7 @@ def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path,  
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path,   aktiv, modulnummer, smart))
     conn.commit()
-
+    
 def get_profiles(conn):
     # Ruft alle gespeicherten Profile aus der Datenbank ab
     cursor = conn.cursor()

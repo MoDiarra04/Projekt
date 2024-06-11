@@ -23,7 +23,7 @@ def recreate_old(profiles):
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
-    firmenname_label = tk.Label(app, text="Firmenname", font=("Helvetica", 20))
+    firmenname_label = tk.Label(app, text="GreenTech Solutions", font=("Helvetica", 20), fg='green')
     firmenname_label.pack(side=tk.TOP)
     
     # Wochenansicht-Frame erstellen und konfigurieren
