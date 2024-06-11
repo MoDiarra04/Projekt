@@ -47,9 +47,6 @@ def create_main_page(app):
     manual_button = tk.Button(buttons_frame, text="Manuell", command= app.create_manual_page)
     manual_button.pack(pady=20)
     
-    # Back button
-    back_button = tk.Button(buttons_frame, text="Zurück", command=app.destroy)
-    back_button.pack(side=tk.TOP)
 
 def display_profiles(app, modulnummer=None):
     if count == 1:
@@ -81,16 +78,16 @@ def display_profiles(app, modulnummer=None):
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer, _ = profile
-        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer))
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer, smart = profile
+        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer,smart))
     
     # Profile in der Wochenansicht anzeigen
     for day, profiles in day_profile_map.items():
         day_index = app.days.index(day)
-        for i, (name, uhrzeit, bewaessungsdauer, modulnummer) in enumerate(profiles):
+        for i, (name, uhrzeit, bewaessungsdauer, modulnummer,smart) in enumerate(profiles):
             profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
             profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
-            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}")
+            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}\nModus: {'Smart' if smart == 1 else 'Standard'}")
             profile_label.pack(padx=5, pady=5)
     
     # Selected in Datenbank ändern für Profile in old
@@ -99,54 +96,10 @@ def display_profiles(app, modulnummer=None):
         update_selection(app.conn,profile[0],True)
 
 
-def create_manual_page_and_close(app, window): #Beim Profilerstellen!
-    window.destroy()  # Schließt das aktuelle Fenster
-    app.create_manual_page()  # Öffnet die manuelle Bewässerungsseite
-
-def create_manual_page(app):
-    # Erstellt eine Seite für manuelle Bewässerung
-    manual_window = Toplevel(app)
-    manual_window.title("Manuelle Bewässerung")
-
-    dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
-    dauer_label.grid(row=0, column=0, padx=10, pady=5)
-    dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
-
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: app.start_countdown(dauer_entry.get(), manual_window))
-    start_button.grid(row=1, column=0, columnspan=2, pady=10)
-
-def start_countdown(app, duration, window):
-    # Startet einen Countdown für die manuelle Bewässerung in Minuten
-    try:
-        duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
-    except ValueError:
-        return  # Dauer ist keine gültige Zahl
-    countdown_label = tk.Label(window, text="")
-    countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
-    app.update_countdown(duration, countdown_label)
-
-
-    
-    
-
-# Smart-Button-Konfiguration
-def toggle_smart_button(app):
-    # Wechselt den Status des Smart-Buttons
-    app.smart_button_active = not app.smart_button_active
-    update_smart_button_appearance(app)
-
-def update_smart_button_appearance(app):
-    # Aktualisiert das Erscheinungsbild des Smart-Buttons
-    if app.smart_button_active:
-        app.smart_button.config(bg='green', text='Smart (Aktiv)')
-    else:
-        app.smart_button.config(bg='SystemButtonFace', text='Smart')
-
 def create_profile_page(app):
     app.image_path = None
     create_profile_window = Toplevel()
-    
+    create_profile_window.geometry("800x480")
     # Entfernt die title bar
     create_profile_window.overrideredirect(True)
     
@@ -158,7 +111,7 @@ def create_profile_page(app):
     
     bild_label = tk.Label(create_profile_window, text="Bild hochladen:")
     bild_label.grid(row=1, column=0, padx=10, pady=5)
-    upload_button = tk.Button(create_profile_window, text="Bild hochladen", command=lambda: set_image_path(app))
+    upload_button = tk.Button(create_profile_window, text="Bild hochladen", command=lambda: [set_image_path(app), raise_above_all(create_profile_window)])
     upload_button.grid(row=1, column=1, padx=10, pady=5)
     
     app.image_label = tk.Label(create_profile_window)
@@ -191,9 +144,6 @@ def create_profile_page(app):
     app.smart_button.grid(row=6, column=0, columnspan=2, pady=10)
     update_smart_button_appearance(app)
 
-    manual_button = tk.Button(create_profile_window, text="Manuell", command=lambda: create_manual_page_and_close(app, create_profile_window))
-    manual_button.grid(row=6, column=1, columnspan=2, pady=10)
-
 
     #Profile speichern    
     speichern_button = tk.Button(create_profile_window, text="Speichern", command=lambda: save_profile_and_close(app, name_entry.get(), selected_weekday, selected_hour, selected_minute, app.smart_button_active))
@@ -209,7 +159,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     if not name  or not weekday.get() or not hour.get() or not duration_entry.get():
         messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
-    image_path = app.image_path if app.image_path else DEFAULT_IMAGE_PATH
+    image_path = app.image_path 
     
     # Speichern des Profils in der Datenbank
     save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
@@ -221,8 +171,6 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     weekday.set(next_day)
     
     hour.set("00:00")
-
-DEFAULT_IMAGE_PATH = "D:\Programming\P_test\pflanze.png"
 
 def show_profiles_page(app):
     create_window = tk.Toplevel(app)
@@ -293,8 +241,6 @@ def update_clicked_profiles(profiles):
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
 
-DEFAULT_IMAGE_PATH = "D:\Programming\P_test\pflanze.png"
-
 def set_image_path(app):
     file_path = filedialog.askopenfilename()
     if file_path:
@@ -304,5 +250,45 @@ def set_image_path(app):
         photo = ImageTk.PhotoImage(img)
         app.image_label.config(image=photo)
         app.image_label.image = photo
+
+
+def create_manual_page(app):
+    # Erstellt eine Seite für manuelle Bewässerung
+    manual_window = Toplevel(app)
+    manual_window.title("Manuelle Bewässerung")
+
+    dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
+    dauer_label.grid(row=0, column=0, padx=10, pady=5)
+    dauer_entry = tk.Entry(manual_window)
+    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: app.start_countdown(dauer_entry.get(), manual_window))
+    start_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+def start_countdown(app, duration, window):
+    # Startet einen Countdown für die manuelle Bewässerung in Minuten
+    try:
+        duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
+    except ValueError:
+        return  # Dauer ist keine gültige Zahl
+    countdown_label = tk.Label(window, text="")
+    countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
+    app.update_countdown(duration, countdown_label)
+
+# Smart-Button-Konfiguration
+def toggle_smart_button(app):
+    # Wechselt den Status des Smart-Buttons
+    app.smart_button_active = not app.smart_button_active
+    update_smart_button_appearance(app)
+
+def update_smart_button_appearance(app):
+    # Aktualisiert das Erscheinungsbild des Smart-Buttons
+    if app.smart_button_active:
+        app.smart_button.config(bg='green', text='Smart (Aktiv)')
     else:
-        app.image_path = DEFAULT_IMAGE_PATH
+        app.smart_button.config(bg='SystemButtonFace', text='Smart')
+
+
+def raise_above_all(window):
+    window.attributes('-topmost', 1)
+    window.attributes('-topmost', 0)

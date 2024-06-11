@@ -26,7 +26,7 @@ def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path,  
     # Speichert ein neues Profil in der Datenbank
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path,   aktiv, modulnummer, smart) 
+        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, aktiv, modulnummer, smart) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path,   aktiv, modulnummer, smart))
     conn.commit()
@@ -34,7 +34,7 @@ def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path,  
 def get_profiles(conn):
     # Ruft alle gespeicherten Profile aus der Datenbank ab
     cursor = conn.cursor()
-    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, modulnummer FROM profiles')
+    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, modulnummer, smart FROM profiles')
     return cursor.fetchall()
 
 def delete_profile(conn, name):
