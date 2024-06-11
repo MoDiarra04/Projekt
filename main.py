@@ -30,13 +30,7 @@ class IrrigationSystemApp(tk.Tk):
     def start_countdown(self, duration, window):
         start_countdown(self, duration, window)
 
-    def update_countdown(self, remaining_time, label):
-        if remaining_time > 0:
-            minutes, seconds = divmod(remaining_time, 60)
-            label.config(text=f"Verbleibende Zeit: {minutes} Minuten {seconds} Sekunden")
-            self.after(1000, self.update_countdown, remaining_time - 1, label)
-        else:
-            label.config(text="Bewässerung abgeschlossen!")
+    
 
 if __name__ == "__main__":
     # Initialisiert und startet die Anwendung

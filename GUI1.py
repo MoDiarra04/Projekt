@@ -159,7 +159,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     if not name  or not weekday.get() or not hour.get() or not duration_entry.get():
         messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
-    image_path = app.image_path 
+    image_path = app.image_path if app.image_path else Default_Image
     
     # Speichern des Profils in der Datenbank
     save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
@@ -171,6 +171,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     weekday.set(next_day)
     
     hour.set("00:00")
+
 
 def show_profiles_page(app):
     create_window = tk.Toplevel(app)
@@ -241,6 +242,8 @@ def update_clicked_profiles(profiles):
     clicked_profiles.clear()
     clicked_profiles.extend(profiles)
 
+Default_Image = "Projekt\pflanze.png"
+
 def set_image_path(app):
     file_path = filedialog.askopenfilename()
     if file_path:
@@ -250,7 +253,13 @@ def set_image_path(app):
         photo = ImageTk.PhotoImage(img)
         app.image_label.config(image=photo)
         app.image_label.image = photo
+    else:
+        app.image_path = Default_Image
 
+
+# Variablen zum Speichern des after-ID-Objekts und der verbleibenden Zeit
+after_id = None
+remaining_time = 0
 
 def create_manual_page(app):
     # Erstellt eine Seite für manuelle Bewässerung
@@ -262,18 +271,46 @@ def create_manual_page(app):
     dauer_entry = tk.Entry(manual_window)
     dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: app.start_countdown(dauer_entry.get(), manual_window))
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-def start_countdown(app, duration, window):
+def start_countdown(app, duration, window, button):
+    global after_id, remaining_time
     # Startet einen Countdown für die manuelle Bewässerung in Minuten
-    try:
-        duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
-    except ValueError:
-        return  # Dauer ist keine gültige Zahl
+    if remaining_time == 0:
+        try:
+            duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
+        except ValueError:
+            return  # Dauer ist keine gültige Zahl
+        remaining_time = duration
     countdown_label = tk.Label(window, text="")
     countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
-    app.update_countdown(duration, countdown_label)
+    after_id = update_countdown(app, remaining_time, countdown_label, button)
+    
+    # Wechsel zu Stopp-Button
+    button.config(text="Stopp", command=lambda: stop_countdown(app, button, countdown_label))
+
+def stop_countdown(app, button, label):
+    global after_id
+    # Stellt den Countdown wieder her und ändert den Button zurück zu Start
+    if after_id:
+        app.after_cancel(after_id)
+        after_id = None
+    label.config(text="Gestoppt")
+    button.config(text="Starten", command=lambda: start_countdown(app, remaining_time, button.master, button))
+
+def update_countdown(app, remaining_time, label, button):
+    global after_id
+    # Aktualisiert den Countdown-Timer
+    if remaining_time > 0:
+        minutes, seconds = divmod(remaining_time, 60)
+        label.config(text=f"Verbleibende Zeit: {minutes} Minuten {seconds} Sekunden")
+        after_id = app.after(1000, update_countdown, app, remaining_time - 1, label, button)
+        remaining_time -= 1
+    else:
+        label.config(text="Bewässerung abgeschlossen!")
+        button.config(text="Starten", command=lambda: start_countdown(app, 0, button.master, button))
+        after_id = None
 
 # Smart-Button-Konfiguration
 def toggle_smart_button(app):
