@@ -269,15 +269,19 @@ remaining_time = 0
 def create_manual_page(app):
     # Erstellt eine Seite für manuelle Bewässerung
     manual_window = Toplevel(app)
-    manual_window.title("Manuelle Bewässerung")
+    manual_window.geometry("800x480")
+    manual_window.overrideredirect(True)
+    
+    titel_label = tk.Label(manual_window, text="Manuelle Bewässerung")
+    titel_label.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
 
     dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
-    dauer_label.grid(row=0, column=0, padx=10, pady=5)
+    dauer_label.grid(row=1, column=0, padx=10, pady=5)
     dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
+    dauer_entry.grid(row=1, column=1, padx=10, pady=5)
 
     start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
-    start_button.grid(row=1, column=0, columnspan=2, pady=10)
+    start_button.grid(row=2, column=0, columnspan=2, pady=10)
 
 def start_countdown(app, duration, window, button):
     global after_id, remaining_time
