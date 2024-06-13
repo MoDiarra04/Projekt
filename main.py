@@ -1,5 +1,5 @@
 import tkinter as tk
-from GUI1 import create_main_page, display_profiles, create_profile_page, show_profiles_page, create_manual_page, start_countdown
+from GUI1 import create_main_page, display_profiles, create_profile_page, show_profiles_page, create_manual_page, start_countdown, check_time
 from Datenbank import create_table, connect_db
 
 class IrrigationSystemApp(tk.Tk):
@@ -19,9 +19,8 @@ class IrrigationSystemApp(tk.Tk):
         self.conn = connect_db('profiles.db')
         create_table(self.conn)
         
-        # Uhrzeit kontinuierlich überprüfen und ggf. wässern
-        self.checked = True # Flag zum Überprüfen ob in dieser Stunde bereits gewässert wurde
-        self.check_time()
+        # Uhrzeit kontinuierlich überprüfen und ggf. Bewässerungsbefehl schicken
+        check_time(self)
 
         # Erstellt die Hauptseite der Anwendung
         create_main_page(self)

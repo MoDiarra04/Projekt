@@ -10,8 +10,7 @@ from datetime import datetime, time
 
 selection = []
 old = []
-count = 0
-#old wiederherstellen, aber nur einmal
+count = 0 # counter, ob old schon einmal wiederhergestellt worden ist
 def recreate_old(profiles):
     global count
     if count == 1:
@@ -333,26 +332,42 @@ def update_smart_button_appearance(app):
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
-    
-
-def check_time(self):
-        if not self.checked:
+   
+      
+last_hour = None # Letzte volle Stunde zu der check_time ausgeführt wurde
+def check_time(app):
+        # last_hour initialisieren
+        global last_hour
+        if last_hour == None: 
+            last_hour = datetime.now().hour - 1
+            if last_hour == -1:
+                last_hour = 23
+        
+        # Stundenwechsel erkennen
+        current_hour = datetime.now().hour
+        if current_hour == last_hour:
             return
+        last_hour = current_hour
+        
+        # Liste aktiver Profile erstellen
+        aktive_profile = []
+        profiles = get_profiles(app.conn)
+        if not profiles: return # return wenn leer
+        for profil in profiles:
+            if profil[5] == 1:
+                aktive_profile.append(profil)
+        
+        # return wenn leer
+        if not aktive_profile: return
+        
+        # Liste für Konvertierung: Montag->0; Dienstag->1 ...
+        wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+                
+        # Wochentage und Stunden prüfen
+        for profil in aktive_profile:
+            if wochentage.index(profil[1]) == datetime.weekday() and datetime.now().hour == profil[2]:
+                # TODO Bewässerungsbefehl abschicken
+                print("Bewässerungsbefehl!")
 
-        # Get Target time
-        target_weekday = 0  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-        target_time = time(get_hour, 0)
-
-        current_datetime = datetime.now()
-        current_weekday = current_datetime.weekday()
-        current_time = current_datetime.time()
-
-        if current_weekday == target_weekday and current_time >= target_time:
-            self.label.config(text="It's the specific time of the week!")
-            self.checked = False  # Stop further checking
-        else:
-            self.label.config(text="Waiting for the specific time...")
-
-        # Schedule the next check in 1000 milliseconds (1 second)
-        if self.checked:
-            self.root.after(1000*60, self.check_time)
+        # Schedule the next check to be in ten seconds; 1000ms*10 = 10 seconds
+        app.root.after(1000*60, app.check_time)
