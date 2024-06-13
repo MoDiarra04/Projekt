@@ -343,7 +343,7 @@ def check_time(app):
         
     # return wenn active_profiles leer
     global active_profiles
-    if not active_profiles:  
+    if not active_profiles:
         app.root.after(1000*60*59, app.check_time) # nochmal checken in 59 minuten
         return
         
@@ -352,7 +352,7 @@ def check_time(app):
                 
     # Wochentage und Stunden prüfen
     for profile in active_profiles:
-        if wochentage.index(profile[1]) == datetime.weekday() and datetime.now().hour == profile[2]:
+        if wochentage.index(profile[1]) == datetime.weekday() and profile[2][0:2] == datetime.now().hour:
             # TODO Bewässerungsbefehl abschicken
             print("Bewässerungsbefehl!")
 
