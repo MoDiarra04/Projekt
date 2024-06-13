@@ -4,22 +4,23 @@ from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
 
-# Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
-# und alten Profile-Listen bzw.die geladenen Profile in old
-
+# Initialisierung der Auswahl(angeklickten Profile zum Tracken der Auswahl in profil laden)
 selection = []
-old = []
-count = 0
-#old wiederherstellen, aber nur einmal
+# alte Profile-Liste bzw. die geladenen Profile
+active_profiles = []
+# counter, ob active_profiles schon wiederhergestellt wurde
+count = 0 
+
+# old wiederherstellen, aber nur einmal
 def recreate_old(profiles):
     global count
     if count == 1:
         return
     count += 1
-    global old
+    global active_profiles
     for tup in profiles:
         if tup[5] == 1:
-            old.append(tup)
+            active_profiles.append(tup)
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
@@ -65,16 +66,16 @@ def display_profiles(app, modulnummer=None):
         # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
         profile = [item for item in profiles if item[0] == selection[-1][0]]
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
-        if not any(item[0] == profile[0][0] for item in old):
+        if not any(item[0] == profile[0][0] for item in active_profiles):
             update_modulnummer(app.conn,profile[0][0],modulnummer)
             #wegen update veränder sich profile, deshalb nochmal connecten
             profiles = get_profiles(app.conn)
             profile = [item for item in profiles if item[0] == selection[-1][0]] 
             for termine in profile:
-                old.append(termine)
+                active_profiles.append(termine)
 
 
-    profiles = old
+    profiles = active_profiles
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
@@ -91,7 +92,7 @@ def display_profiles(app, modulnummer=None):
             profile_label.pack(padx=5, pady=5)
     
     # Selected in Datenbank ändern für Profile in old
-    sorted = {item[0]: item for item in old}.values()
+    sorted = {item[0]: item for item in active_profiles}.values()
     for profile in sorted:
         update_selection(app.conn,profile[0],True)
 
