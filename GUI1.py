@@ -23,7 +23,7 @@ def recreate_old(profiles):
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
-    firmenname_label = tk.Label(app, text="Firmenname", font=("Helvetica", 20))
+    firmenname_label = tk.Label(app, text="GreenTech Solutions", font=("Helvetica", 20), fg='green')
     firmenname_label.pack(side=tk.TOP)
     
     # Wochenansicht-Frame erstellen und konfigurieren
@@ -156,16 +156,11 @@ def create_profile_page(app):
 
 def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     # Validierung der Eingaben
-    if not name  or not weekday.get() or not hour.get() or not duration_entry.get():
-        error_window = tk.Toplevel(app)
-        error_window.overrideredirect(True)
-        warning = tk.Label(error_window, text="Fehler, Alle Felder müssen ausgefüllt werden!")
-        warning.pack(pady=5)
-        back_button = tk.Button(error_window, text="Zurück", command=error_window.destroy)
-        back_button.pack(pady=10)
+    if  not weekday.get() or not hour.get() or not duration_entry.get():
+        messagebox.showerror("Fehler", "Alle Felder müssen ausgefüllt werden!")
         return
     image_path = app.image_path if app.image_path else Default_Image
-    
+    name = name if name else "Pflanze"
     # Speichern des Profils in der Datenbank
     save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
     
@@ -269,20 +264,19 @@ remaining_time = 0
 def create_manual_page(app):
     # Erstellt eine Seite für manuelle Bewässerung
     manual_window = Toplevel(app)
-    manual_window.geometry("800x480")
-    manual_window.overrideredirect(True)
-    
-    titel_label = tk.Label(manual_window, text="Manuelle Bewässerung")
-    titel_label.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
+    manual_window.title("Manuelle Bewässerung")
 
     dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
-    dauer_label.grid(row=1, column=0, padx=10, pady=5)
+    dauer_label.grid(row=0, column=0, padx=10, pady=5)
     dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=1, column=1, padx=10, pady=5)
+    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
     start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
-    start_button.grid(row=2, column=0, columnspan=2, pady=10)
-
+    start_button.grid(row=1, column=0, columnspan=2, pady=10)
+    
+    back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_window.destroy())
+    back_button.grid(row=1, column=1, columnspan=2, pady=10)
+    
 def start_countdown(app, duration, window, button):
     global after_id, remaining_time
     # Startet einen Countdown für die manuelle Bewässerung in Minuten
