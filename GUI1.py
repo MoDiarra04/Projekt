@@ -332,24 +332,14 @@ def update_smart_button_appearance(app):
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
-   
-# Letzte volle Stunde zu der check_time ausgeführt wurde
-last_hour = None
 
 # Zeit überprüfen, mit Terminen vergleichen und ggf. einen Bewässerungsbefehl schicken
 def check_time(app):
-    # last_hour initialisieren
-    global last_hour
-    if last_hour == None: 
-        last_hour = datetime.now().hour - 1
-        if last_hour == -1:
-            last_hour = 23
         
     # Volle Stunde erkennen
     if datetime.now().minute != 0:
         app.root.after(1000, app.check_time) # nochmal checken in 1 sekunde
         return
-    last_hour = datetime.now().hour
         
     # return wenn active_profiles leer
     global active_profiles
