@@ -18,6 +18,10 @@ class IrrigationSystemApp(tk.Tk):
         # Datenbankverbindung herstellen und Tabelle erstellen
         self.conn = connect_db('profiles.db')
         create_table(self.conn)
+        
+        # Uhrzeit kontinuierlich überprüfen und ggf. wässern
+        self.checked = True # Flag zum Überprüfen ob in dieser Stunde bereits gewässert wurde
+        self.check_time()
 
         # Erstellt die Hauptseite der Anwendung
         create_main_page(self)
