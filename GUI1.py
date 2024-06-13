@@ -9,17 +9,17 @@ from datetime import datetime, time
 # und alten Profile-Listen bzw.die geladenen Profile in old
 
 selection = []
-old = []
+active_profiles = []
 count = 0 # counter, ob old schon einmal wiederhergestellt worden ist
 def recreate_old(profiles):
     global count
     if count == 1:
         return
     count += 1
-    global old
+    global active_profiles
     for tup in profiles:
         if tup[5] == 1:
-            old.append(tup)
+            active_profiles.append(tup)
 
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
@@ -65,16 +65,16 @@ def display_profiles(app, modulnummer=None):
         # Termine für Pflanze aus Datenbank filtern mithilfe des Namens 
         profile = [item for item in profiles if item[0] == selection[-1][0]]
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
-        if not any(item[0] == profile[0][0] for item in old):
+        if not any(item[0] == profile[0][0] for item in active_profiles):
             update_modulnummer(app.conn,profile[0][0],modulnummer)
             #wegen update veränder sich profile, deshalb nochmal connecten
             profiles = get_profiles(app.conn)
             profile = [item for item in profiles if item[0] == selection[-1][0]] 
             for termine in profile:
-                old.append(termine)
+                active_profiles.append(termine)
 
 
-    profiles = old
+    profiles = active_profiles
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
@@ -91,7 +91,7 @@ def display_profiles(app, modulnummer=None):
             profile_label.pack(padx=5, pady=5)
     
     # Selected in Datenbank ändern für Profile in old
-    sorted = {item[0]: item for item in old}.values()
+    sorted = {item[0]: item for item in active_profiles}.values()
     for profile in sorted:
         update_selection(app.conn,profile[0],True)
 
@@ -333,41 +333,38 @@ def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
    
-      
-last_hour = None # Letzte volle Stunde zu der check_time ausgeführt wurde
-def check_time(app):
-        # last_hour initialisieren
-        global last_hour
-        if last_hour == None: 
-            last_hour = datetime.now().hour - 1
-            if last_hour == -1:
-                last_hour = 23
-        
-        # Stundenwechsel erkennen
-        current_hour = datetime.now().hour
-        if current_hour == last_hour:
-            return
-        last_hour = current_hour
-        
-        # Liste aktiver Profile erstellen
-        aktive_profile = []
-        profiles = get_profiles(app.conn)
-        if not profiles: return # return wenn leer
-        for profil in profiles:
-            if profil[5] == 1:
-                aktive_profile.append(profil)
-        
-        # return wenn leer
-        if not aktive_profile: return
-        
-        # Liste für Konvertierung: Montag->0; Dienstag->1 ...
-        wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
-                
-        # Wochentage und Stunden prüfen
-        for profil in aktive_profile:
-            if wochentage.index(profil[1]) == datetime.weekday() and datetime.now().hour == profil[2]:
-                # TODO Bewässerungsbefehl abschicken
-                print("Bewässerungsbefehl!")
+# Letzte volle Stunde zu der check_time ausgeführt wurde
+last_hour = None
 
-        # Schedule the next check to be in ten seconds; 1000ms*10 = 10 seconds
-        app.root.after(1000*60, app.check_time)
+# Zeit überprüfen, mit Terminen vergleichen und ggf. einen Bewässerungsbefehl schicken
+def check_time(app):
+    # last_hour initialisieren
+    global last_hour
+    if last_hour == None: 
+        last_hour = datetime.now().hour - 1
+        if last_hour == -1:
+            last_hour = 23
+        
+    # Volle Stunde erkennen
+    if datetime.now().minute != 0:
+        app.root.after(1000, app.check_time) # nochmal checken in 1 sekunde
+        return
+    last_hour = datetime.now().hour
+        
+    # return wenn active_profiles leer
+    global active_profiles
+    if not active_profiles:  
+        app.root.after(1000*60*59, app.check_time) # nochmal checken in 59 minuten
+        return
+        
+    # Liste für Konvertierung: Montag->0; Dienstag->1 ...
+    wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+                
+    # Wochentage und Stunden prüfen
+    for profile in active_profiles:
+        if wochentage.index(profile[1]) == datetime.weekday() and datetime.now().hour == profile[2]:
+            # TODO Bewässerungsbefehl abschicken
+            print("Bewässerungsbefehl!")
+
+    # Schedule the next check
+    app.root.after(1000*60*59, app.check_time) # nochmal checken in 59 minuten
