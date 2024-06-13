@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
+from datetime import datetime, time
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
@@ -332,3 +333,26 @@ def update_smart_button_appearance(app):
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
+    
+
+def check_time(self):
+        if not self.checked:
+            return
+
+        # Get Target time
+        target_weekday = 0  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        target_time = time(get_hour, 0)
+
+        current_datetime = datetime.now()
+        current_weekday = current_datetime.weekday()
+        current_time = current_datetime.time()
+
+        if current_weekday == target_weekday and current_time >= target_time:
+            self.label.config(text="It's the specific time of the week!")
+            self.checked = False  # Stop further checking
+        else:
+            self.label.config(text="Waiting for the specific time...")
+
+        # Schedule the next check in 1000 milliseconds (1 second)
+        if self.checked:
+            self.root.after(1000*60, self.check_time)
