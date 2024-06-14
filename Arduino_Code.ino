@@ -3,24 +3,47 @@ void setup() {
 }
 
 void loop() {
+  // Delay for stability
+  delay(100);
+  
+  // Eingelesene Daten zurücksetzen
+  string data = "";
   
   // Kommunikation mit RPI; String einlesen
   if (Serial.available()) {
-    string data = Serial.readStringUntil('\n'); // Read the incoming data
+    data = Serial.readStringUntil('\n'); // Read the incoming data
+  }
+  else {
+    return;
   }
 
-  // Messwert einlesen?
-  int messwert = 17; // Dummy Messwert
+  // Data auslesen
+  int modulnummer = int(data[0]);
+  int modulnummer = 0; // Es gibt vorerst nur ein modul
+  int minuten = int(data[2]) * 10 + int(data[3]);
+  bool smart = bool(data[5]);
 
-  // Daten zurückschicken?
-  Serial.println(messwert);
+  // Minuten bounds check
+  if (minuten > 20 || minuten < 1){
+    return; // Startet die main-loop erneut
+  }
 
-  // Delay for stability
-  delay(100);
-
-  // Wenn Befehl erhalten wurde; befehl ausführen; data zurücksetzen
+  // Check smart modus und messwert
+  int grenzwert = 20; // Dummy Grenzwert
+  if (smart){
+    // TODO Messwert einlesen?
+    int messwert = 17; // Dummy Messwert
+    if ( messwert > grenzwert){
+      return; // Startet die main-loop erneut
+    }
+  }
+  
+  // Befehl ausführen
   if(!data.empty()){
-    // TODO: Pumpe ansteuern
+    // Motor ansteuern für x minuten
+    digitalWrite(9, HIGH);
+    delay(1000*60*minuten); // 1000ms * 60 * minuten = minuten, für die gewässert werden soll
+    digitalWrite(9, LOW);
     data = "";
   }
 }
