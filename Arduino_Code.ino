@@ -1,5 +1,7 @@
 void setup() {
   Serial.begin(9600); // Start serial communication at 9600 baud
+  pinMode(A0, INPUT);
+  pinMode(9, OUTPUT);
 }
 
 void loop() {
