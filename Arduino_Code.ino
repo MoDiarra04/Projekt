@@ -29,10 +29,9 @@ void loop() {
   }
 
   // Check smart modus und messwert
-  int grenzwert = 20; // Dummy Grenzwert
+  int grenzwert = 100; // Dummy Grenzwert
   if (smart){
-    // TODO Messwert einlesen?
-    int messwert = 17; // Dummy Messwert
+    int messwert = analogRead(A0);
     if ( messwert > grenzwert){
       return; // Startet die main-loop erneut
     }
