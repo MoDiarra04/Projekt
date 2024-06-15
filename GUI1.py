@@ -24,11 +24,28 @@ def recreate_old(profiles):
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
     firmenname_label = tk.Label(app, text="GreenTech Solutions", font=("Helvetica", 20), fg='green')
-    firmenname_label.pack(side=tk.TOP)
+    firmenname_label.pack(side=tk.TOP, pady=10)
     
-    # Wochenansicht-Frame erstellen und konfigurieren
-    app.wochenansicht_frame = tk.Frame(app, bg='grey', bd=5, relief="raised", pady=2)
-    app.wochenansicht_frame.pack(side=tk.TOP)
+    # Canvas und Scrollbar für Wochenansicht-Frame erstellen
+    canvas = tk.Canvas(app)
+    scrollbar = tk.Scrollbar(app, orient="vertical", command=canvas.yview)
+    scrollable_frame = tk.Frame(canvas, bg='grey', bd=5, relief="raised", pady=2)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=800, height=1500)
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    app.wochenansicht_frame = scrollable_frame
+    
     app.days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
     for idx, day in enumerate(app.days):
         tk.Label(app.wochenansicht_frame, text=day).grid(row=0, column=idx, padx=5, pady=5)
@@ -86,9 +103,9 @@ def display_profiles(app, modulnummer=None):
         day_index = app.days.index(day)
         for i, (name, uhrzeit, bewaessungsdauer, modulnummer,smart) in enumerate(profiles):
             profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
-            profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
+            profile_frame.grid(row=i + 1, column=day_index, padx=3, pady=3, sticky="nsew")
             profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}\nModus: {'Smart' if smart == 1 else 'Standard'}")
-            profile_label.pack(padx=5, pady=5)
+            profile_label.pack(padx=3, pady=3)
     
     # Selected in Datenbank ändern für Profile in old
     sorted = {item[0]: item for item in old}.values()
@@ -237,6 +254,7 @@ def ok_button_callback(app,module_var,create_window):
 
 def update_clicked_profiles(profiles):
     global selection
+    print(selection)
     for profile in clicked_profiles:
         selection.append(profile)
     clicked_profiles.clear()

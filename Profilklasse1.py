@@ -30,7 +30,7 @@ class ProfileCard(tk.Frame):
         name_label.pack(padx=5, pady=5)
         
         # Klick-Ereignis an das Namenslabel binden
-        name_label.bind("<Button-1>", self.on_click)
+        image_label.bind("<Button-1>", self.on_click)
         self.pack_propagate(False)
 
     def on_click(self, event):
