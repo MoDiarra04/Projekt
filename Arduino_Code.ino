@@ -8,43 +8,40 @@ void loop() {
   // Delay for stability
   delay(100);
   
-  // Eingelesene Daten zurücksetzen
-  string data = "";
-  
-  // Kommunikation mit RPI; String einlesen
+  // (Eingelesene) Daten zurücksetzen
+  String data = ""; // String mit großem S und kein include string, weil das eine Arduino-Standard-library ist.
+
+  // Kommunikation mit RPI; String einlesen; Serial ist Arduino Standard-library
   if (Serial.available()) {
-    data = Serial.readStringUntil('\n'); // Read the incoming data
+    data = Serial.readStringUntil('\n');
+    // Die Daten sollen folgendes Format haben:
+    // <Smartmodus binär> <Modulnummer> <Wässerungsgszeit in Minuten(ggf. mit führender Null)>
+    // Beispiel: '0 0 01'
   }
   else {
-    return;
+    return; // loop neustarten, um auf input zu warten
   }
 
-  // Data auslesen
-  int modulnummer = int(data[0]);
-  int modulnummer = 0; // Es gibt vorerst nur ein modul
-  int minuten = int(data[2]) * 10 + int(data[3]);
-  bool smart = bool(data[5]);
+  // Auf Serial Monitor ausgeben zum Überprüfen
+  Serial.println(data);
 
-  // Minuten bounds check
-  if (minuten > 20 || minuten < 1){
-    return; // Startet die main-loop erneut
-  }
+  // Data auslesen, type casting ist komisch auf dem arduino
+  bool smart = data[0] == '1';  // Convert char to boolean
+  int modulnummer = data[2] - '0';  // Convert char to int; wegen ASCII Codierung minus char 0
+  modulnummer = 0; // Es gibt vorerst nur ein modul
+  int minuten = (data[4] - '0') * 10 + (data[5] - '0');  // Convert chars to int
 
   // Check smart modus und messwert
-  int grenzwert = 100; // Dummy Grenzwert
   if (smart){
+    int grenzwert = 100; // Dummy Grenzwert
     int messwert = analogRead(A0);
     if ( messwert > grenzwert){
       return; // Startet die main-loop erneut
     }
   }
-  
-  // Befehl ausführen
-  if(!data.empty()){
-    // Motor ansteuern für x minuten
-    digitalWrite(9, HIGH);
-    delay(1000*60*minuten); // 1000ms * 60 * minuten = minuten, für die gewässert werden soll
-    digitalWrite(9, LOW);
-    data = "";
-  }
+
+  // Motor ansteuern für x minuten
+  digitalWrite(9, HIGH);
+  delay(1000*60*minuten); // 1000ms * 60 * minuten = minuten, für die gewässert werden soll
+  digitalWrite(9, LOW);
 }

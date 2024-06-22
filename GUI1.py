@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
-from datetime import datetime, time
+from arduino_serial import befehl_an_arduino
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
@@ -271,11 +271,15 @@ def create_manual_page(app):
     dauer_entry = tk.Entry(manual_window)
     dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: init_countdown_and_watering(app, dauer_entry.get(), manual_window, start_button))
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
     
     back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_window.destroy())
     back_button.grid(row=1, column=1, columnspan=2, pady=10)
+    
+def init_countdown_and_watering(app, dauer, manual_window, start_button):
+    befehl_an_arduino("0 0 " + str(dauer))
+    start_countdown(app, dauer, manual_window, start_button)
     
 def start_countdown(app, duration, window, button):
     global after_id, remaining_time
@@ -332,29 +336,3 @@ def update_smart_button_appearance(app):
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
-
-# Zeit überprüfen, mit Terminen vergleichen und ggf. einen Bewässerungsbefehl schicken
-def check_time(app):
-        
-    # Volle Stunde erkennen
-    if datetime.now().minute != 0:
-        app.root.after(1000, app.check_time) # nochmal checken in 1 sekunde
-        return
-        
-    # return wenn active_profiles leer
-    global active_profiles
-    if not active_profiles:
-        app.root.after(1000*60*59, app.check_time) # nochmal checken in 59 minuten
-        return
-        
-    # Liste für Konvertierung: Montag->0; Dienstag->1 ...
-    wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
-                
-    # Wochentage und Stunden prüfen
-    for profile in active_profiles:
-        if wochentage.index(profile[1]) == datetime.weekday() and profile[2][0:2] == datetime.now().hour:
-            # TODO Bewässerungsbefehl abschicken
-            print("Bewässerungsbefehl!")
-
-    # Schedule the next check
-    app.root.after(1000*60*59, app.check_time) # nochmal checken in 59 minuten
