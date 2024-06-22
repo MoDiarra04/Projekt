@@ -12,14 +12,17 @@ def befehl_an_arduino(smart: bool, modulnummer: int, dauer: int):
         dauer = '0' + str(dauer)
     
     # Bewässerungsbefehl zu einem string zusammenfassen
-    # 'b' to encode to bytes
-    watering_command = 'b' + str(smart) + ' ' + str(modulnummer) + ' ' + str(dauer)
-
-    # ard_serial: Schnittstelle zum Arduino
-    ard_serial = serial.Serial('/dev/ttyACM0',9600,timeout=1)
+    watering_command = str(smart) + ' ' + str(modulnummer) + ' ' + str(dauer)
+    
+    # ard_serial ist Schnittstelle zum Arduino
+    # ard_serial = serial.Serial('/dev/ttyACM0', 9600,timeout=1) # connection from RPI
+    ard_serial = serial.Serial('COM6', 9600, timeout=1) # connection from Windows
+    # Um 'COMX' herauszufinden: Im Geräte Manager-> "Ports" oder "Anschlüsse" -> Arduino
+    # Wenn das nicht klappt: in der Arduino IDE-> oben rechts: Serial Monitor -> Anschluss steht im Eingabefeld
 
     # Wait for the serial connection to initialize
     time.sleep(2) 
     
     # Write to serial
-    ard_serial.write(watering_command)
+    ard_serial.write(watering_command.encode())
+    print("reached")

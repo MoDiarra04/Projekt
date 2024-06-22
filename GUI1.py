@@ -278,7 +278,7 @@ def create_manual_page(app):
     back_button.grid(row=1, column=1, columnspan=2, pady=10)
     
 def init_countdown_and_watering(app, dauer, manual_window, start_button):
-    befehl_an_arduino("0 0 " + str(dauer))
+    befehl_an_arduino(0, 0, int(dauer))
     start_countdown(app, dauer, manual_window, start_button)
     
 def start_countdown(app, duration, window, button):
