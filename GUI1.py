@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
-from arduino_serial import befehl_an_arduino
+from arduino_serial import befehl_an_arduino, stop_befehl_an_arduino
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
@@ -271,15 +271,19 @@ def create_manual_page(app):
     dauer_entry = tk.Entry(manual_window)
     dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: init_countdown_and_watering(app, dauer_entry.get(), manual_window, start_button))
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: manual_page_start_button_pressed(app, dauer_entry.get(), manual_window, start_button))
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
     
-    back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_window.destroy())
+    back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_page_back_button_pressed(app, manual_window))
     back_button.grid(row=1, column=1, columnspan=2, pady=10)
     
-def init_countdown_and_watering(app, dauer, manual_window, start_button):
+def manual_page_start_button_pressed(app, dauer, manual_window, start_button):
     befehl_an_arduino(0, 0, int(dauer))
     start_countdown(app, dauer, manual_window, start_button)
+    
+def manual_page_back_button_pressed(app, manual_window): 
+    stop_befehl_an_arduino()
+    manual_window.destroy()
     
 def start_countdown(app, duration, window, button):
     global after_id, remaining_time
@@ -295,7 +299,11 @@ def start_countdown(app, duration, window, button):
     after_id = update_countdown(app, remaining_time, countdown_label, button)
     
     # Wechsel zu Stopp-Button
-    button.config(text="Stopp", command=lambda: stop_countdown(app, button, countdown_label))
+    button.config(text="Stopp", command=lambda: stop_button_pressed(app, button, countdown_label))
+
+def stop_button_pressed(app, button, countdown_label):
+    stop_befehl_an_arduino()
+    stop_countdown(app, button, countdown_label)
 
 def stop_countdown(app, button, label):
     global after_id

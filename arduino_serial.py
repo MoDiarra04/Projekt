@@ -25,4 +25,8 @@ def befehl_an_arduino(smart: bool, modulnummer: int, dauer: int):
     
     # Write to serial
     ard_serial.write(watering_command.encode())
-    print("reached")
+    
+def stop_befehl_an_arduino():
+    ard_serial = serial.Serial('COM6', 9600, timeout=1)
+    time.sleep(2)
+    ard_serial.write("STOP".encode())

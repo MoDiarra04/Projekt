@@ -14,6 +14,7 @@ void loop() {
   // Kommunikation mit RPI; String einlesen; Serial ist Arduino Standard-library
   if (Serial.available()) {
     data = Serial.readStringUntil('\n');
+    Serial.println(data);
     // Die Daten sollen folgendes Format haben:
     // <Smartmodus binär> <Modulnummer> <Wässerungsgszeit in Minuten(ggf. mit führender Null)>
     // Beispiel: '0 0 01'
@@ -42,6 +43,15 @@ void loop() {
 
   // Motor ansteuern für x minuten
   digitalWrite(9, HIGH);
-  delay(1000*60*minuten); // 1000ms * 60 * minuten = minuten, für die gewässert werden soll
+  unsigned long startTime = millis(); // Get current time in ms
+  while (millis() - startTime < 1000 * 60 * minuten) {
+    if (Serial.available()) {
+      String command = Serial.readStringUntil('\n');
+      if (command == "STOP") {
+        break;
+      }
+    }
+    delay(100); // Small delay to prevent overwhelming the serial buffer
+  }
   digitalWrite(9, LOW);
 }
