@@ -353,7 +353,7 @@ def update_smart_button_appearance(app):
         app.smart_button.config(bg='SystemButtonFace', text='Smart')
 
 
-
+#Funktion zur Bearbeitung von Profilen auf dem Profil anzeigen window
 def edit_profile():
 
    
@@ -362,7 +362,6 @@ def edit_profile():
     newWindow.title("Profil Bearbeiten")
 
     newWindow.geometry("800x480")
-    
     
     name_label = tk.Label(newWindow, text="Name:")
     name_label.grid(row=0, column=0, padx=10, pady=5)
@@ -398,14 +397,17 @@ def edit_profile():
     selected_minute = tk.StringVar()
     selected_minute.set(minutes[0])  # Standardmäßig die erste Minute auswählen
     minute_dropdown = tk.OptionMenu(newWindow, selected_minute, *minutes)
-    minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
-
+    minute_dropdown.grid(row=5, column=1, pady=5)
     
+    back_button = tk.Button(newWindow, text="Zurück", command=newWindow.destroy)
+    back_button.grid(row=6, column=0, padx=10, pady=5)
+
+    speichern_button = tk.Button(newWindow, text="Speichern")
+    # Neue werte sollen in der Datenbank beim jeweiligen Profil aktualisiert werden
+    speichern_button.grid(row=6, column=1, padx=10, pady=5)
 
    
-
-
-    
+      
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
