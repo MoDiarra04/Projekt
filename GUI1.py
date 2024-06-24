@@ -73,7 +73,6 @@ def display_profiles(app, modulnummer=None):
             return
 
     if not modulnummer:
-        print(clicked_profiles)
         messagebox.showerror("Sie müssen ein Modul auswählen")
         return
     
@@ -255,7 +254,6 @@ def ok_button_callback(app,module_var,create_window):
 
 def update_clicked_profiles(profiles):
     global selection
-    print(selection)
     for profile in clicked_profiles:
         selection.append(profile)
     clicked_profiles.clear()

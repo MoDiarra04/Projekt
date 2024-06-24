@@ -21,16 +21,17 @@ class ProfileCard(tk.Frame):
             image = Image.open(image_path)
             image.thumbnail((150, 150))
             photo = ImageTk.PhotoImage(image)
-            image_label = tk.Label(window, image=photo, bg="white")
-            image_label.image = photo  # Referenz speichern, um das Bild anzuzeigen
-            image_label.pack()
+            self.image_label = tk.Label(window, image=photo, bg="white")
+            self.image_label.image = photo  # Referenz speichern, um das Bild anzuzeigen
+            self.image_label.pack()
 
         # Label mit dem Profilnamen erstellen und anzeigen
-        name_label = tk.Label(window, text=name, bg="white", font=("Helvetica", 12))
-        name_label.pack(padx=5, pady=5)
+        self.name_label = tk.Label(window, text=name, bg="white", font=("Helvetica", 12))
+        self.name_label.pack(padx=5, pady=5)
         
         # Klick-Ereignis an das Namenslabel binden
-        image_label.bind("<Button-1>", self.on_click)
+        self.image_label.bind("<Button-1>", self.on_click)
+        self.name_label.bind("<Button-1>", self.on_click)
         self.pack_propagate(False)
 
     def on_click(self, event):
@@ -40,10 +41,12 @@ class ProfileCard(tk.Frame):
         # Profil zur Liste der angeklickten Profile hinzufügen oder entfernen
         if self.selected:
             clicked_profiles.append(self.profile)
-            self.config(bg="lightgreen")
+            self.name_label.config(bg="lightgreen")
         else:
-            self.config(bg="white")
+            self.name_label.config(bg="white")
         
         # Wenn ein Update-Callback bereitgestellt wurde, diesen aufrufen
         if self.update_callback:
             self.update_callback(clicked_profiles)
+
+
