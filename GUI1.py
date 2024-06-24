@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
-from arduino_serial import befehl_an_arduino, stop_befehl_an_arduino
+from arduino_serial import befehl_an_arduino, stop_befehl_an_arduino, close_serial_connection
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
@@ -255,11 +255,12 @@ def set_image_path(app):
         app.image_label.image = photo
     else:
         app.image_path = Default_Image
-
+        
 
 # Variablen zum Speichern des after-ID-Objekts und der verbleibenden Zeit
 after_id = None
 remaining_time = 0
+stop_button_pressed_bool = None
 
 def create_manual_page(app):
     # Erstellt eine Seite für manuelle Bewässerung
@@ -276,55 +277,65 @@ def create_manual_page(app):
     
     back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_page_back_button_pressed(app, manual_window))
     back_button.grid(row=1, column=1, columnspan=2, pady=10)
-    
+
 def manual_page_start_button_pressed(app, dauer, manual_window, start_button):
+    global stop_button_pressed_bool
+    stop_button_pressed_bool = False
     befehl_an_arduino(0, 0, int(dauer))
-    start_countdown(app, dauer, manual_window, start_button)
+    start_countdown(app, int(dauer), manual_window, start_button)
     
-def manual_page_back_button_pressed(app, manual_window): 
-    stop_befehl_an_arduino()
+def manual_page_back_button_pressed(app, manual_window):
+    global top_button_pressed_bool
+    if not stop_button_pressed_bool:
+        stop_befehl_an_arduino()
+    top_button_pressed_bool = False
+    stop_countdown(app)
+    close_serial_connection()
     manual_window.destroy()
     
 def start_countdown(app, duration, window, button):
     global after_id, remaining_time
     # Startet einen Countdown für die manuelle Bewässerung in Minuten
-    if remaining_time == 0:
-        try:
-            duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
-        except ValueError:
-            return  # Dauer ist keine gültige Zahl
-        remaining_time = duration
+    try:
+        duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
+    except ValueError:
+        return  # Dauer ist keine gültige Zahl
+    remaining_time = duration
+    
     countdown_label = tk.Label(window, text="")
     countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
-    after_id = update_countdown(app, remaining_time, countdown_label, button)
+    update_countdown(app, countdown_label, button)
     
     # Wechsel zu Stopp-Button
     button.config(text="Stopp", command=lambda: stop_button_pressed(app, button, countdown_label))
 
 def stop_button_pressed(app, button, countdown_label):
+    global stop_button_pressed_bool 
+    stop_button_pressed_bool = True
     stop_befehl_an_arduino()
-    stop_countdown(app, button, countdown_label)
+    stop_countdown(app)
+    countdown_label.config(text="Gestoppt")
+    button.config(text="Starten", command=lambda: manual_page_start_button_pressed(app, remaining_time // 60, button.master, button))
 
-def stop_countdown(app, button, label):
-    global after_id
+def stop_countdown(app):
+    global after_id, remaining_time
     # Stellt den Countdown wieder her und ändert den Button zurück zu Start
     if after_id:
         app.after_cancel(after_id)
         after_id = None
-    label.config(text="Gestoppt")
-    button.config(text="Starten", command=lambda: start_countdown(app, remaining_time, button.master, button))
+    remaining_time = 0
 
-def update_countdown(app, remaining_time, label, button):
-    global after_id
+def update_countdown(app, label, button):
+    global after_id, remaining_time
     # Aktualisiert den Countdown-Timer
     if remaining_time > 0:
         minutes, seconds = divmod(remaining_time, 60)
         label.config(text=f"Verbleibende Zeit: {minutes} Minuten {seconds} Sekunden")
-        after_id = app.after(1000, update_countdown, app, remaining_time - 1, label, button)
         remaining_time -= 1
+        after_id = app.after(1000, update_countdown, app, label, button)
     else:
         label.config(text="Bewässerung abgeschlossen!")
-        button.config(text="Starten", command=lambda: start_countdown(app, 0, button.master, button))
+        button.config(text="Starten", command=lambda: manual_page_start_button_pressed(app, 0, button.master, button))
         after_id = None
 
 # Smart-Button-Konfiguration

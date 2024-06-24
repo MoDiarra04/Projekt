@@ -56,4 +56,5 @@ void loop() {
     delay(100); // Small delay to prevent overwhelming the serial buffer
   }
   digitalWrite(9, LOW); // Motor ausschalten
+  digitalWrite(Reset, LOW);
 }
