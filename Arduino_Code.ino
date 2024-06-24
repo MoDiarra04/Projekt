@@ -42,9 +42,11 @@ void loop() {
   }
 
   // Motor ansteuern für x minuten
-  digitalWrite(9, HIGH);
+  digitalWrite(9, HIGH); // Motor anschalten
+
+  // Für x Minuten oder auf ein gesendetes "STOP" warten
   unsigned long startTime = millis(); // Get current time in ms
-  while (millis() - startTime < 1000 * 60 * minuten) {
+  while (millis() - startTime < 1000UL * 60 * minuten) { // UL bedeutet unsigned long. Das ist wieder so ein komischer type cast für den Arduino
     if (Serial.available()) {
       String command = Serial.readStringUntil('\n');
       if (command == "STOP") {
@@ -53,5 +55,5 @@ void loop() {
     }
     delay(100); // Small delay to prevent overwhelming the serial buffer
   }
-  digitalWrite(9, LOW);
+  digitalWrite(9, LOW); // Motor ausschalten
 }
