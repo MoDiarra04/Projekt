@@ -60,3 +60,5 @@ def update_modulnummer(conn, name, modulnummer):
                    WHERE name = ?
                    ''',(modulnummer,name))
     conn.commit()
+
+    

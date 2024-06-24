@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-from tkinter import Toplevel, filedialog, messagebox, ttk
+from tkinter import Toplevel, filedialog, messagebox, ttk, Label
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
 
@@ -218,7 +218,7 @@ def show_profiles_page(app):
     
     back_button = tk.Button(button_frame, text="Zurück", command=create_window.destroy)
     back_button.pack(side="left", padx=5)
-    edit_button = tk.Button(button_frame, text="Edit")
+    edit_button = tk.Button(button_frame, text="Edit", command=edit_profile)
     edit_button.pack(side="left", padx=5)
     exp_button = tk.Button(button_frame, text="Export")
     exp_button.pack(side="left", padx=5)
@@ -353,6 +353,61 @@ def update_smart_button_appearance(app):
         app.smart_button.config(bg='SystemButtonFace', text='Smart')
 
 
+
+def edit_profile(app):
+
+   
+    newWindow = Toplevel()
+
+    newWindow.title("Profil Bearbeiten")
+
+    newWindow.geometry("800x480")
+    
+    
+    name_label = tk.Label(newWindow, text="Name:")
+    name_label.grid(row=0, column=0, padx=10, pady=5)
+    name_entry = tk.Entry(newWindow)
+    name_entry.grid(row=0, column=1, padx=10, pady=5)
+    
+    bild_label = tk.Label(newWindow, text="Bild hochladen:")
+    bild_label.grid(row=1, column=0, padx=10, pady=5)
+    upload_button = tk.Button(newWindow, text="Bild hochladen", command=lambda: [set_image_path(), raise_above_all()])
+    upload_button.grid(row=1, column=1, padx=10, pady=5)
+    
+    image_label = tk.Label(newWindow)
+    image_label.grid(row=2, column=1, padx=10, pady=5)
+    
+    weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+    weekday_label = tk.Label(newWindow, text="Wochentag:")
+    weekday_label.grid(row=3, column=0, padx=10, pady=5)
+    selected_weekday = tk.StringVar(value=weekdays[0])
+    weekday_dropdown = tk.OptionMenu(newWindow, selected_weekday, *weekdays)
+    weekday_dropdown.grid(row=3, column=1, padx=10, pady=5)
+    
+    hours = [f"{hour:02d}:00" for hour in range(24)]
+    selected_hour_label = tk.Label(newWindow, text="Uhrzeit:")
+    selected_hour_label.grid(row=4, column=0, padx=10, pady=5)
+    selected_hour = tk.StringVar(value=hours[0])
+    hour_dropdown = tk.OptionMenu(newWindow, selected_hour, *hours)
+    hour_dropdown.grid(row=4, column=1, padx=10, pady=5)
+    
+    # Dropdown Dauer
+    minuten_label = tk.Label(newWindow, text="Bewässerungsdauer (min):")
+    minuten_label.grid(row=5, column=0, padx=10, pady=5)
+    minutes = [str(minute) for minute in range(1, 21)]
+    selected_minute = tk.StringVar()
+    selected_minute.set(minutes[0])  # Standardmäßig die erste Minute auswählen
+    minute_dropdown = tk.OptionMenu(newWindow, selected_minute, *minutes)
+    minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
+
+    smart_button = tk.Button(newWindow, text="Smart", command=lambda: toggle_smart_button(app))
+    smart_button.grid(row=6, column=0, columnspan=2, pady=10)
+    update_smart_button_appearance()
+
+   
+
+
+    
 def raise_above_all(window):
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
