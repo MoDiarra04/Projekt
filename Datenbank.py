@@ -16,25 +16,24 @@ def create_table(conn):
             bewaessungsdauer TEXT,
             image_path TEXT,  
             aktiv INTEGER,
-            modulnummer INTEGER,
             smart BOOLEAN
         )
     ''')
     conn.commit()
 
-def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, modulnummer, smart):
+def save_profile(conn, name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, smart):
     # Speichert ein neues Profil in der Datenbank
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, aktiv, modulnummer, smart) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path,   aktiv, modulnummer, smart))
+        INSERT INTO profiles (name, wochentag, uhrzeit, bewaessungsdauer, image_path, aktiv, smart) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (name, wochentag, uhrzeit, bewaessungsdauer, image_path,   aktiv, smart))
     conn.commit()
     
 def get_profiles(conn):
     # Ruft alle gespeicherten Profile aus der Datenbank ab
     cursor = conn.cursor()
-    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, modulnummer, smart FROM profiles')
+    cursor.execute('SELECT name, wochentag, uhrzeit, bewaessungsdauer, image_path,  aktiv, smart FROM profiles')
     return cursor.fetchall()
 
 def delete_profile(conn, name):
@@ -52,11 +51,3 @@ def update_selection(conn, name, selection):
                    ''',(selection,name))
     conn.commit()
 
-def update_modulnummer(conn, name, modulnummer):
-    cursor = conn.cursor()
-    cursor.execute('''
-                   UPDATE profiles SET
-                   modulnummer = ?
-                   WHERE name = ?
-                   ''',(modulnummer,name))
-    conn.commit()

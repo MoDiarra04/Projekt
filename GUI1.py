@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
-from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
+from Datenbank import save_profile, get_profiles, update_selection
 
 # Initialisierung der Auswahl(angeklickten Profile zum Tracken der Auswahl in profil laden)
 selection = []
@@ -66,16 +66,13 @@ def create_main_page(app):
     manual_button.pack(pady=20)
     
 
-def display_profiles(app, modulnummer=None):
+def display_profiles(app):
     if count == 1:
         if not selection:
             messagebox.showerror("Sie müssen ein Profil auswählen")
             return
 
-    if not modulnummer:
-        messagebox.showerror("Sie müssen ein Modul auswählen")
-        return
-    
+
     profiles = get_profiles(app.conn)
     recreate_old(profiles)
     if selection != []:
@@ -83,9 +80,6 @@ def display_profiles(app, modulnummer=None):
         profile = [item for item in profiles if item[0] == selection[-1][0]]
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
         if not any(item[0] == profile[0][0] for item in active_profiles):
-            update_modulnummer(app.conn,profile[0][0],modulnummer)
-            #wegen update veränder sich profile, deshalb nochmal connecten
-            profiles = get_profiles(app.conn)
             profile = [item for item in profiles if item[0] == selection[-1][0]] 
             for termine in profile:
                 active_profiles.append(termine)
@@ -95,17 +89,17 @@ def display_profiles(app, modulnummer=None):
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer, smart = profile
-        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer,smart))
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , smart = profile
+        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer,smart))
     
     # Profile in der Wochenansicht anzeigen
     for day, profiles in day_profile_map.items():
         day_index = app.days.index(day)
-        for i, (name, uhrzeit, bewaessungsdauer, modulnummer,smart) in enumerate(profiles):
-            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
-            profile_frame.grid(row=i + 1, column=day_index, padx=3, pady=3, sticky="nsew")
-            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}\nModus: {'Smart' if smart == 1 else 'Standard'}")
-            profile_label.pack(padx=3, pady=3)
+        for i, (name, uhrzeit, bewaessungsdauer,smart) in enumerate(profiles):
+            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=1, relief="solid")
+            profile_frame.grid(row=i + 1, column=day_index, padx=1, pady=1, sticky="nsew")
+            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nZeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: 1\nModus: {'Smart' if smart == 1 else 'Standard'}")
+            profile_label.pack(padx=1, pady=1)
     
     # Selected in Datenbank ändern für Profile in old
     sorted = {item[0]: item for item in active_profiles}.values()
@@ -179,7 +173,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     image_path = app.image_path if app.image_path else Default_Image
     name = name if name else "Pflanze"
     # Speichern des Profils in der Datenbank
-    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
+    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False, smart)
     
     # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
@@ -220,13 +214,6 @@ def show_profiles_page(app):
     for profile in profiles:
         card = ProfileCard(profiles_frame, profile, update_callback=update_clicked_profiles)
         card.pack(padx=10, pady=10, fill="x")
-    
-    # Checkbox erstellen
-    module_var = tk.StringVar()  # Gemeinsame Variable für beide Checkbuttons
-    module_checkbox1 = tk.Checkbutton(create_window, text="Pumpe: 1", variable=module_var, onvalue="1", offvalue="")
-    module_checkbox1.pack(side="left", padx=10)
-    module_checkbox2 = tk.Checkbutton(create_window, text="Pumpe: 2", variable=module_var, onvalue="2", offvalue="")
-    module_checkbox2.pack(side="left", padx=10)
 
     # Button-Frame erstellen
     button_frame = tk.Frame(create_window)
@@ -240,18 +227,14 @@ def show_profiles_page(app):
     exp_button.pack(side="left", padx=5)
     imp_button = tk.Button(button_frame, text="Import")
     imp_button.pack(side="left", padx=5)
-    ok_button = tk.Button(button_frame, text="OK", command=lambda: [ok_button_callback(app,module_var,create_window),selection.clear()])
+    ok_button = tk.Button(button_frame, text="OK", command=lambda: [ok_button_callback(app,create_window),selection.clear()])
     ok_button.pack(side="right", padx=5)
 
-def ok_button_callback(app,module_var,create_window):
+def ok_button_callback(app,create_window):
     # Check if the module_var is not empty before converting to int
     if selection:
-        if module_var.get():
-            selected_module = int(module_var.get())
-            display_profiles(app, selected_module)
-        else:
-            messagebox.showerror("Sie müssen ein Modul auswählen")
         create_window.destroy()
+        display_profiles(app)
     else:
         create_window.destroy()
 
