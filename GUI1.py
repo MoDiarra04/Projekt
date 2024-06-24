@@ -245,12 +245,16 @@ def show_profiles_page(app):
 
 def ok_button_callback(app,module_var,create_window):
     # Check if the module_var is not empty before converting to int
-    if module_var.get():
-        selected_module = int(module_var.get())
-        display_profiles(app, selected_module)
+    if selection:
+        if module_var.get():
+            selected_module = int(module_var.get())
+            display_profiles(app, selected_module)
+        else:
+            messagebox.showerror("Sie müssen ein Modul auswählen")
+        create_window.destroy()
     else:
-        messagebox.showerror("Sie müssen ein Modul auswählen")
-    create_window.destroy()
+        create_window.destroy()
+
 
 def update_clicked_profiles(profiles):
     global selection
