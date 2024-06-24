@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-from tkinter import Toplevel, filedialog, messagebox
+from tkinter import Toplevel, filedialog, messagebox, ttk
 from Profilklasse1 import ProfileCard, clicked_profiles
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
 
@@ -232,8 +232,7 @@ def ok_button_callback(app,module_var,create_window):
     if module_var.get():
         selected_module = int(module_var.get())
         display_profiles(app, selected_module)
-    else:
-        messagebox.showerror("Sie müssen ein Modul auswählen")
+    
     create_window.destroy()
 
 def update_clicked_profiles(profiles):
@@ -261,60 +260,84 @@ def set_image_path(app):
 # Variablen zum Speichern des after-ID-Objekts und der verbleibenden Zeit
 after_id = None
 remaining_time = 0
+original_duration = 0
 
 def create_manual_page(app):
-    # Erstellt eine Seite für manuelle Bewässerung
+    global remaining_time, original_duration
+
+    # Reset the selected time and remaining time when opening the window
+    selected_time = tk.IntVar(value=1)  # Set initial value to 1
+    
+    choices = [int(i) for i in range(1, 21)]
+    
+    # Create a window for manual watering
     manual_window = Toplevel(app)
     manual_window.title("Manuelle Bewässerung")
-
     dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
     dauer_label.grid(row=0, column=0, padx=10, pady=5)
-    dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
+    
+    drop = ttk.Combobox(manual_window, textvariable=selected_time, values=choices, state="readonly")
+    drop.grid(row=0, column=1, padx=10, pady=5)
+    drop.bind("<<ComboboxSelected>>", lambda event: update_duration(selected_time.get()))
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, manual_window, start_button, drop, countdown_label))
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
     
-    back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_window.destroy())
+    back_button = tk.Button(manual_window, text="Zurück", command=lambda: close_manual_window(app, manual_window))
     back_button.grid(row=1, column=1, columnspan=2, pady=10)
     
-def start_countdown(app, duration, window, button):
-    global after_id, remaining_time
-    # Startet einen Countdown für die manuelle Bewässerung in Minuten
-    if remaining_time == 0:
-        try:
-            duration = int(duration) * 60  # Umwandlung von Minuten in Sekunden
-        except ValueError:
-            return  # Dauer ist keine gültige Zahl
-        remaining_time = duration
-    countdown_label = tk.Label(window, text="")
+    countdown_label = tk.Label(manual_window, text="")
     countdown_label.grid(row=2, column=0, columnspan=2, pady=10)
-    after_id = update_countdown(app, remaining_time, countdown_label, button)
-    
-    # Wechsel zu Stopp-Button
-    button.config(text="Stopp", command=lambda: stop_countdown(app, button, countdown_label))
 
-def stop_countdown(app, button, label):
+def update_duration(duration):
+    global remaining_time, original_duration
+    remaining_time = duration * 60
+    original_duration = remaining_time
+
+def start_countdown(app, window, button, drop, label):
+    global after_id, remaining_time, original_duration
+
+    if remaining_time == 0:
+        remaining_time = original_duration
+
+    if after_id is not None:
+        app.after_cancel(after_id)
+
+    after_id = update_countdown(app, label, button, drop)
+    
+    # Change to stop button
+    button.config(text="Stopp", command=lambda: stop_countdown(app, button, label, drop))
+
+def stop_countdown(app, button, label, drop):
     global after_id
-    # Stellt den Countdown wieder her und ändert den Button zurück zu Start
+
+    # Stop the countdown and change the button back to start
     if after_id:
         app.after_cancel(after_id)
         after_id = None
     label.config(text="Gestoppt")
-    button.config(text="Starten", command=lambda: start_countdown(app, remaining_time, button.master, button))
+    button.config(text="Starten", command=lambda: start_countdown(app, button.master, button, drop, label))
 
-def update_countdown(app, remaining_time, label, button):
-    global after_id
-    # Aktualisiert den Countdown-Timer
+def update_countdown(app, label, button, drop):
+    global after_id, remaining_time
+    
+    # Update the countdown timer
     if remaining_time > 0:
         minutes, seconds = divmod(remaining_time, 60)
         label.config(text=f"Verbleibende Zeit: {minutes} Minuten {seconds} Sekunden")
-        after_id = app.after(1000, update_countdown, app, remaining_time - 1, label, button)
+        after_id = app.after(1000, update_countdown, app, label, button, drop)
         remaining_time -= 1
     else:
         label.config(text="Bewässerung abgeschlossen!")
-        button.config(text="Starten", command=lambda: start_countdown(app, 0, button.master, button))
+        button.config(text="Starten", command=lambda: start_countdown(app, original_duration // 60, button.master, button, drop, label))
         after_id = None
+
+def close_manual_window(app, window):
+    global after_id
+    if after_id is not None:
+        app.after_cancel(after_id)
+        after_id = None
+    window.destroy()
 
 # Smart-Button-Konfiguration
 def toggle_smart_button(app):
