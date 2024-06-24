@@ -354,7 +354,7 @@ def update_smart_button_appearance(app):
 
 
 
-def edit_profile(app):
+def edit_profile():
 
    
     newWindow = Toplevel()
@@ -400,9 +400,7 @@ def edit_profile(app):
     minute_dropdown = tk.OptionMenu(newWindow, selected_minute, *minutes)
     minute_dropdown.grid(row=5, column=1, padx=10, pady=5)
 
-    smart_button = tk.Button(newWindow, text="Smart", command=lambda: toggle_smart_button(app))
-    smart_button.grid(row=6, column=0, columnspan=2, pady=10)
-    update_smart_button_appearance()
+    
 
    
 
