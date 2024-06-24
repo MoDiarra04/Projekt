@@ -285,10 +285,14 @@ def create_manual_page(app):
 
     dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
     dauer_label.grid(row=0, column=0, padx=10, pady=5)
-    dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, dauer_entry.get(), manual_window, start_button))
+    minutes = [str(minute) for minute in range(1, 21)]
+    selected_minute = tk.StringVar()
+    selected_minute.set(minutes[0]) 
+    minute_dropdown = tk.OptionMenu(manual_window, selected_minute, *minutes)
+    minute_dropdown.grid(row=0, column=1, padx=10, pady=5)
+
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: start_countdown(app, selected_minute.get(), manual_window, start_button))
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
     
     back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_window.destroy())
