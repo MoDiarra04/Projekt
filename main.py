@@ -20,6 +20,8 @@ class IrrigationSystemApp(tk.Tk):
         self.conn = connect_db('profiles.db')
         create_table(self.conn)
         
+        self.bind('<Control-q>', self.quit_app)
+
         # Uhrzeit kontinuierlich überprüfen und ggf. Bewässerungsbefehl schicken
         self.check_time()
 
@@ -34,6 +36,9 @@ class IrrigationSystemApp(tk.Tk):
     def start_countdown(self, duration, window):
         start_countdown(self, duration, window)
         
+    def quit_app(self, event=None):
+        self.quit()
+
     # Zeit überprüfen, mit Terminen vergleichen und ggf. einen Bewässerungsbefehl schicken
     def check_time(self):
         
