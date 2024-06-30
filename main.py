@@ -27,7 +27,7 @@ class IrrigationSystemApp(tk.Tk):
 
         # Erstellt die Hauptseite der Anwendung
         create_main_page(self)
-        display_profiles(self,True)
+        display_profiles(self)
         #get every selection = True and push it to old in start
 
     def create_manual_page(self):

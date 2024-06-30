@@ -2,15 +2,25 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
+
 from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
 from arduino_serial import befehl_an_arduino, stop_befehl_an_arduino, close_serial_connection
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
 # und alten Profile-Listen bzw.die geladenen Profile in old
 
+
+
+# Initialisierung der Auswahl(angeklickten Profile zum Tracken der Auswahl in profil laden)
 selection = []
+
+# alte Profile-Liste bzw. die geladenen Profile
 active_profiles = []
-count = 0 # counter, ob old schon einmal wiederhergestellt worden ist
+# counter, ob active_profiles schon wiederhergestellt wurde
+count = 0 
+
+# old wiederherstellen, aber nur einmal
+
 def recreate_old(profiles):
     global count
     if count == 1:
@@ -24,11 +34,28 @@ def recreate_old(profiles):
 def create_main_page(app):
     # Firmenname-Label erstellen und platzieren
     firmenname_label = tk.Label(app, text="GreenTech Solutions", font=("Helvetica", 20), fg='green')
-    firmenname_label.pack(side=tk.TOP)
+    firmenname_label.pack(side=tk.TOP, pady=10)
     
-    # Wochenansicht-Frame erstellen und konfigurieren
-    app.wochenansicht_frame = tk.Frame(app, bg='grey', bd=5, relief="raised", pady=2)
-    app.wochenansicht_frame.pack(side=tk.TOP)
+    # Canvas und Scrollbar für Wochenansicht-Frame erstellen
+    canvas = tk.Canvas(app)
+    scrollbar = tk.Scrollbar(app, orient="vertical", command=canvas.yview)
+    scrollable_frame = tk.Frame(canvas, bg='grey', bd=5, relief="raised", pady=2)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=800, height=1500)
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    app.wochenansicht_frame = scrollable_frame
+    
     app.days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
     for idx, day in enumerate(app.days):
         tk.Label(app.wochenansicht_frame, text=day).grid(row=0, column=idx, padx=5, pady=5)
@@ -48,17 +75,13 @@ def create_main_page(app):
     manual_button.pack(pady=20)
     
 
-def display_profiles(app, modulnummer=None):
+def display_profiles(app):
     if count == 1:
         if not selection:
             messagebox.showerror("Sie müssen ein Profil auswählen")
             return
 
-    if not modulnummer:
-        print(clicked_profiles)
-        messagebox.showerror("Sie müssen ein Modul auswählen")
-        return
-    
+
     profiles = get_profiles(app.conn)
     recreate_old(profiles)
     if selection != []:
@@ -66,9 +89,7 @@ def display_profiles(app, modulnummer=None):
         profile = [item for item in profiles if item[0] == selection[-1][0]]
         # Überprüfen ob Profil schon in old ist, falls nicht wird gepusht
         if not any(item[0] == profile[0][0] for item in active_profiles):
-            update_modulnummer(app.conn,profile[0][0],modulnummer)
-            #wegen update veränder sich profile, deshalb nochmal connecten
-            profiles = get_profiles(app.conn)
+
             profile = [item for item in profiles if item[0] == selection[-1][0]] 
             for termine in profile:
                 active_profiles.append(termine)
@@ -78,17 +99,17 @@ def display_profiles(app, modulnummer=None):
     # Zuordnung der Profile zu den jeweiligen Wochentagen
     day_profile_map = {day: [] for day in app.days}
     for profile in profiles:
-        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , modulnummer, smart = profile
-        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer, modulnummer,smart))
+        name, wochentag, uhrzeit, bewaessungsdauer, _ , _ , smart = profile
+        day_profile_map[wochentag].append((name, uhrzeit, bewaessungsdauer,smart))
     
     # Profile in der Wochenansicht anzeigen
     for day, profiles in day_profile_map.items():
         day_index = app.days.index(day)
-        for i, (name, uhrzeit, bewaessungsdauer, modulnummer,smart) in enumerate(profiles):
-            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=2, relief="solid")
-            profile_frame.grid(row=i + 1, column=day_index, padx=5, pady=5, sticky="nsew")
-            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nUhrzeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: {modulnummer}\nModus: {'Smart' if smart == 1 else 'Standard'}")
-            profile_label.pack(padx=5, pady=5)
+        for i, (name, uhrzeit, bewaessungsdauer,smart) in enumerate(profiles):
+            profile_frame = tk.Frame(app.wochenansicht_frame, bg="white", bd=1, relief="solid")
+            profile_frame.grid(row=i + 1, column=day_index, padx=1, pady=1, sticky="nsew")
+            profile_label = tk.Label(profile_frame, text=f"Pflanze: {name}\nZeit: {uhrzeit} Uhr\nDauer: {bewaessungsdauer}min\nModul: 1\nModus: {'Smart' if smart == 1 else 'Standard'}")
+            profile_label.pack(padx=1, pady=1)
     
     # Selected in Datenbank ändern für Profile in old
     sorted = {item[0]: item for item in active_profiles}.values()
@@ -162,7 +183,7 @@ def save_profile_and_close(app, name, weekday, hour, duration_entry, smart):
     image_path = app.image_path if app.image_path else Default_Image
     name = name if name else "Pflanze"
     # Speichern des Profils in der Datenbank
-    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False,False, smart)
+    save_profile(app.conn, name, weekday.get(), hour.get(), duration_entry.get(), image_path, False, smart)
     
     # Setzen der nächsten Eingabefelder
     current_day_index = app.days.index(weekday.get())
@@ -203,13 +224,6 @@ def show_profiles_page(app):
     for profile in profiles:
         card = ProfileCard(profiles_frame, profile, update_callback=update_clicked_profiles)
         card.pack(padx=10, pady=10, fill="x")
-    
-    # Checkbox erstellen
-    module_var = tk.StringVar()  # Gemeinsame Variable für beide Checkbuttons
-    module_checkbox1 = tk.Checkbutton(create_window, text="Pumpe: 1", variable=module_var, onvalue="1", offvalue="")
-    module_checkbox1.pack(side="left", padx=10)
-    module_checkbox2 = tk.Checkbutton(create_window, text="Pumpe: 2", variable=module_var, onvalue="2", offvalue="")
-    module_checkbox2.pack(side="left", padx=10)
 
     # Button-Frame erstellen
     button_frame = tk.Frame(create_window)
@@ -223,17 +237,17 @@ def show_profiles_page(app):
     exp_button.pack(side="left", padx=5)
     imp_button = tk.Button(button_frame, text="Import")
     imp_button.pack(side="left", padx=5)
-    ok_button = tk.Button(button_frame, text="OK", command=lambda: [ok_button_callback(app,module_var,create_window),selection.clear()])
+    ok_button = tk.Button(button_frame, text="OK", command=lambda: [ok_button_callback(app,create_window),selection.clear()])
     ok_button.pack(side="right", padx=5)
 
-def ok_button_callback(app,module_var,create_window):
+def ok_button_callback(app,create_window):
     # Check if the module_var is not empty before converting to int
-    if module_var.get():
-        selected_module = int(module_var.get())
-        display_profiles(app, selected_module)
+    if selection:
+        create_window.destroy()
+        display_profiles(app)
     else:
-        messagebox.showerror("Sie müssen ein Modul auswählen")
-    create_window.destroy()
+        create_window.destroy()
+
 
 def update_clicked_profiles(profiles):
     global selection
@@ -269,10 +283,16 @@ def create_manual_page(app):
 
     dauer_label = tk.Label(manual_window, text="Bewässerungsdauer (Minuten):")
     dauer_label.grid(row=0, column=0, padx=10, pady=5)
-    dauer_entry = tk.Entry(manual_window)
-    dauer_entry.grid(row=0, column=1, padx=10, pady=5)
 
-    start_button = tk.Button(manual_window, text="Starten", command=lambda: manual_page_start_button_pressed(app, dauer_entry.get(), manual_window, start_button))
+
+    minutes = [str(minute) for minute in range(1, 21)]
+    selected_minute = tk.StringVar()
+    selected_minute.set(minutes[0]) 
+    minute_dropdown = tk.OptionMenu(manual_window, selected_minute, *minutes)
+    minute_dropdown.grid(row=0, column=1, padx=10, pady=5)
+
+    start_button = tk.Button(manual_window, text="Starten", command=lambda: manual_page_start_button_pressed(app, selected_minute.get(), manual_window, start_button))
+
     start_button.grid(row=1, column=0, columnspan=2, pady=10)
     
     back_button = tk.Button(manual_window, text="Zurück", command=lambda: manual_page_back_button_pressed(app, manual_window))
