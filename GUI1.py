@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 from tkinter import Toplevel, filedialog, messagebox
 from Profilklasse1 import ProfileCard, clicked_profiles
 
-from Datenbank import save_profile, get_profiles, delete_profile, update_selection, update_modulnummer
+from Datenbank import save_profile, get_profiles, delete_profile, update_selection
 from arduino_serial import befehl_an_arduino, stop_befehl_an_arduino, close_serial_connection
 
 # Initialisierung der Auswahl(agbeklickten Profile zum Tracken der Auswahl)- 
